@@ -1,0 +1,46 @@
+{
+    "traffic_title": "Traffic Stop",
+    "case_label": "Traffic stop",
+    "xp_warn": "Warning",
+    "xp_ticket": "Ticket",
+
+    "opt_begin": "Begin traffic stop",
+    "opt_continue": "Continue traffic stop",
+    "opt_papers": "Check documents",
+    "opt_breath": "Perform breathalyzer test",
+    "opt_search": "Search vehicle",
+    "opt_exit": "Ask driver to step out",
+    "opt_warn": "Issue warning",
+    "opt_ticket": "Issue ticket",
+    "opt_arrest": "Arrest driver",
+    "opt_release": "Let them go",
+
+    "no_driver": "No driver in the vehicle.",
+    "released": "Driver is free to go.",
+
+    "papers_running": "Checking documents...",
+    "papers_header": "Vehicle documents",
+    "papers_content": "**Driver:** %s\n\n**Plate:** %s\n\n**License:** %s\n\n**Registration:** %s",
+    "license_valid": "valid",
+    "license_expired": "expired",
+    "license_revoked": "revoked",
+    "reg_valid": "present",
+    "reg_missing": "missing",
+
+    "breath_running": "Performing breathalyzer test...",
+    "breath_pos": "Result: %s per mille - over the limit!",
+    "breath_neg": "Result: %s per mille - within limits.",
+
+    "search_running": "Searching vehicle...",
+    "search_found": "Contraband found in the vehicle!",
+    "search_clean": "Nothing suspicious found.",
+
+    "warn_issued": "Warning issued.",
+    "ticket_issued": "Ticket issued.",
+    "ticket_no_violation": "No violation found - a ticket is not justified.",
+
+    "arrest_ready": "The driver surrenders. Arrest them via interaction.",
+    "driver_flees": "The driver is fleeing!",
+    "flee_stopped": "The fleeing vehicle is stopped - apprehend the driver!",
+    "flee_blip": "Fleeing driver"
+}

@@ -1,0 +1,46 @@
+{
+    "traffic_title": "Verkehrskontrolle",
+    "case_label": "Verkehrskontrolle",
+    "xp_warn": "Verwarnung",
+    "xp_ticket": "Bußgeld",
+
+    "opt_begin": "Verkehrskontrolle beginnen",
+    "opt_continue": "Verkehrskontrolle fortsetzen",
+    "opt_papers": "Papiere kontrollieren",
+    "opt_breath": "Alkoholtest durchführen",
+    "opt_search": "Fahrzeug durchsuchen",
+    "opt_exit": "Fahrer aussteigen lassen",
+    "opt_warn": "Verwarnung aussprechen",
+    "opt_ticket": "Bußgeld ausstellen",
+    "opt_arrest": "Fahrer festnehmen",
+    "opt_release": "Weiterfahren lassen",
+
+    "no_driver": "Kein Fahrer im Fahrzeug.",
+    "released": "Fahrer darf weiterfahren.",
+
+    "papers_running": "Papiere werden kontrolliert...",
+    "papers_header": "Fahrzeugpapiere",
+    "papers_content": "**Fahrer:** %s\n\n**Kennzeichen:** %s\n\n**Führerschein:** %s\n\n**Zulassung:** %s",
+    "license_valid": "gültig",
+    "license_expired": "abgelaufen",
+    "license_revoked": "entzogen",
+    "reg_valid": "vorhanden",
+    "reg_missing": "fehlt",
+
+    "breath_running": "Alkoholtest wird durchgeführt...",
+    "breath_pos": "Ergebnis: %s ‰ – über dem Grenzwert!",
+    "breath_neg": "Ergebnis: %s ‰ – im Rahmen.",
+
+    "search_running": "Fahrzeug wird durchsucht...",
+    "search_found": "Schmuggelware im Fahrzeug gefunden!",
+    "search_clean": "Nichts Verdächtiges gefunden.",
+
+    "warn_issued": "Verwarnung ausgesprochen.",
+    "ticket_issued": "Bußgeld ausgestellt.",
+    "ticket_no_violation": "Kein Verstoß festgestellt – ein Bußgeld ist nicht gerechtfertigt.",
+
+    "arrest_ready": "Der Fahrer ergibt sich. Nimm ihn per Interaktion fest.",
+    "driver_flees": "Der Fahrer flüchtet!",
+    "flee_stopped": "Das Fluchtfahrzeug ist gestoppt – stelle den Fahrer!",
+    "flee_blip": "Flüchtiger Fahrer"
+}

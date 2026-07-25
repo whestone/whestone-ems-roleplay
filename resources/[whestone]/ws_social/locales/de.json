@@ -1,0 +1,19 @@
+{
+    "emote_title": "Emote",
+    "emote_menu_title": "Emotes",
+    "emote_started": "%s – bewege dich, um abzubrechen.",
+    "emote_stop": "Emote beenden",
+    "emote_no_vehicle": "Emotes sind im Fahrzeug nicht möglich.",
+
+    "rp_title": "Rollenspiel",
+    "rp_empty": "Bitte einen Text angeben, z. B. /me winkt freundlich.",
+
+    "coffee_title": "Kaffeeautomat",
+    "coffee_option": "Kaffee ziehen",
+    "coffee_pull": "Kaffee wird gezogen...",
+    "coffee_done": "Frischer Kaffee – du fühlst dich wach!",
+
+    "duty_board_title": "Dienstzeit-Rangliste",
+    "duty_own": "Deine gesamte Dienstzeit",
+    "duty_board_empty": "Noch keine Dienstzeiten erfasst."
+}

@@ -1,0 +1,24 @@
+# --- Secrets: echte Serverkonfig bleibt lokal (siehe server.cfg.example) ---
+server.cfg
+
+# --- Runtime / Cache ---
+cache/
+.replxx_history
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Datenbank-Dumps / lokale Sicherungen ---
+*.sql.bak
+*.dump
+
+# --- OS-Müll ---
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- Editor ---
+.vscode/
+.idea/
+*.swp

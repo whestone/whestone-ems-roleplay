@@ -1,0 +1,13 @@
+# Zeilenenden im Repo normalisieren (verhindert LF/CRLF-Rauschen)
+* text=auto
+
+# Binärdateien nicht anfassen
+*.ytd binary
+*.yft binary
+*.ydr binary
+*.ybn binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.dds binary
+*.ttf binary
