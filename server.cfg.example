@@ -1,0 +1,61 @@
+# ============================================================
+# Whestone EMS – Police PvE (Phase 1)
+# ------------------------------------------------------------
+# VORLAGE. Diese Datei nach `server.cfg` kopieren und die mit
+# <...> markierten Werte eintragen. Die echte server.cfg wird
+# NICHT versioniert (steht in .gitignore) – sie enthält Secrets.
+# ============================================================
+
+endpoint_add_tcp "0.0.0.0:30120"
+endpoint_add_udp "0.0.0.0:30120"
+
+sv_hostname "Whestone EMS | Police PvE | Deutsch"
+sets sv_projectName "Whestone EMS"
+sets sv_projectDesc "EMS Roleplay PvE – Polizei, KI-Einsätze, Deutsch"
+sets locale "de-DE"
+sets tags "roleplay, pve, polizei, deutsch"
+
+sv_maxclients 32
+## [txAdmin CFG validator]: onesync MUST only be set in the txAdmin settings page.
+# set onesync on
+
+# Game-Build erzwingen: 3717 = DLC "A Safehouse in the Hills" (Dez 2025),
+# noetig fuer neue Fahrzeuge wie polbuffalo6 (Buffalo STX Pursuit) und polgauntlet.
+# Voraussetzung: FiveM-Artifact >= 23683 UND aktuelle GTA-V-Installation bei allen Spielern.
+sv_enforceGameBuild 3717
+
+# CFX-Lizenzschlüssel (keymaster.fivem.net)
+sv_licenseKey "<DEIN_CFX_LICENSE_KEY>"
+
+# Datenbank (MariaDB). Format: mysql://user:passwort@host:port/datenbank
+set mysql_connection_string "mysql://<DB_USER>:<DB_PASSWORT>@localhost:3306/whestone_ems?charset=utf8mb4"
+
+# ox_lib Sprache
+setr ox:locale "de"
+
+# --- Basis (cfx-default) ---
+ensure mapmanager
+ensure chat
+ensure spawnmanager
+ensure sessionmanager
+ensure hardcap
+ensure baseevents
+
+# --- Bibliotheken ---
+ensure oxmysql
+ensure ox_lib
+ensure ox_target
+
+# --- Whestone Framework ---
+ensure ws_core
+ensure ws_police
+ensure ws_dispatch
+ensure ws_tablet
+ensure ws_traffic
+ensure ws_ems
+ensure ws_social
+
+# --- Admins (Whestone Adminmenü im Tablet + /callout) ---
+# Pro Admin eine Zeile mit dessen License-Identifier:
+add_ace identifier.license:<ADMIN_LICENSE_IDENTIFIER> ws.admin allow
+add_ace identifier.license:<ADMIN_LICENSE_IDENTIFIER> command.callout allow

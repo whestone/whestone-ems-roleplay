@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+    html, body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+
+    #app { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; }
+    #app.open { display: flex; }
+
+    .tablet {
+        width: 920px; height: 620px;
+        background: #0b0f16;
+        border: 10px solid #1c222d;
+        border-radius: 28px;
+        box-shadow: 0 24px 80px rgba(0,0,0,.75), inset 0 0 0 1px #2a3342;
+        display: flex; flex-direction: column; overflow: hidden;
+        position: relative;
+    }
+    .tablet::before { /* Kamera */
+        content: ''; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+        width: 9px; height: 9px; border-radius: 50%; background: #10151d;
+        box-shadow: inset 0 0 3px #000, 0 0 2px #3b475c;
+    }
+
+    .statusbar {
+        height: 32px; display: flex; align-items: center; justify-content: space-between;
+        padding: 0 22px; font-size: 12px; color: #7d8aa0; background: #0e131c;
+        border-bottom: 1px solid #1d2530;
+    }
+    .statusbar .brand { letter-spacing: 2px; font-weight: 600; color: #4f9cf7; }
+
+    header {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 24px 12px; background: linear-gradient(180deg,#101724,#0b0f16);
+    }
+    .badge {
+        width: 46px; height: 46px; border-radius: 10px;
+        background: radial-gradient(circle at 30% 30%, #2f6fd0, #17335f);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; box-shadow: 0 2px 10px rgba(47,111,208,.35);
+    }
+    header h1 { font-size: 19px; color: #e8eef7; font-weight: 600; }
+    header p { font-size: 12px; color: #6d7a91; margin-top: 2px; }
+    header .spacer { flex: 1; }
+    .btn {
+        border: 1px solid #2a3648; background: #141c2a; color: #c7d2e3;
+        padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+        transition: background .15s, border-color .15s;
+    }
+    .btn:hover { background: #1c2738; border-color: #3b4d68; }
+    .btn.primary { background: #1f5dc4; border-color: #2d6fe0; color: #fff; }
+    .btn.primary:hover { background: #2569da; }
+    .btn.danger { border-color: #5c2530; color: #e08a97; }
+    .btn.small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    nav { display: flex; gap: 6px; padding: 0 24px; background: #0b0f16; }
+    nav button {
+        border: none; background: transparent; color: #74829a;
+        padding: 11px 18px; font-size: 14px; cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+    nav button.active { color: #eaf1fb; border-bottom-color: #2d6fe0; }
+
+    main { flex: 1; overflow-y: auto; padding: 18px 24px; }
+    main::-webkit-scrollbar { width: 8px; }
+    main::-webkit-scrollbar-thumb { background: #223047; border-radius: 4px; }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th {
+        text-align: left; color: #5f6d85; font-weight: 600; font-size: 11.5px;
+        text-transform: uppercase; letter-spacing: .8px;
+        padding: 8px 12px; border-bottom: 1px solid #1d2530;
+    }
+    td { padding: 10px 12px; color: #c9d4e4; border-bottom: 1px solid #151c27; }
+    tr:hover td { background: #10171f; }
+
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+    .pill.green { background: #12351f; color: #5fd889; }
+    .pill.gray  { background: #232a35; color: #8794a8; }
+    .pill.blue  { background: #16294d; color: #6ea8ff; }
+    .pill.amber { background: #3a2c10; color: #e8b64c; }
+
+    .empty { text-align: center; color: #57647c; padding: 46px 0 30px; font-size: 14px; }
+    .empty .icon { font-size: 34px; display: block; margin-bottom: 10px; opacity: .6; }
+
+    .genbox {
+        max-width: 460px; margin: 30px auto; background: #0f1622;
+        border: 1px solid #1d2735; border-radius: 14px; padding: 26px;
+    }
+    .genbox h2 { color: #e8eef7; font-size: 16px; margin-bottom: 6px; }
+    .genbox p { color: #6d7a91; font-size: 13px; margin-bottom: 18px; }
+    .genbox select {
+        width: 100%; padding: 10px 12px; margin-bottom: 14px;
+        background: #131c2b; color: #dbe4f1; border: 1px solid #283650; border-radius: 8px;
+        font-size: 14px; outline: none;
+    }
+    .genbox .btn { width: 100%; padding: 11px; font-size: 14px; }
+    #genMsg { margin-top: 14px; font-size: 13px; text-align: center; min-height: 18px; }
+    #genMsg.ok { color: #5fd889; }
+    #genMsg.err { color: #e08a97; }
+
+    .skillwrap { max-width: 640px; margin: 16px auto; }
+    .points-banner {
+        text-align: center; margin-bottom: 18px; padding: 10px;
+        background: #10192a; border: 1px solid #22314a; border-radius: 10px;
+        color: #c7d2e3; font-size: 14px;
+    }
+    .points-banner b { color: #6ea8ff; font-size: 18px; }
+    .skillcard {
+        background: #0f1622; border: 1px solid #1d2735; border-radius: 14px;
+        padding: 20px 22px; margin-bottom: 14px;
+        display: flex; align-items: center; gap: 18px;
+    }
+    .skillcard .icon { font-size: 30px; width: 46px; text-align: center; }
+    .skillcard .info { flex: 1; }
+    .skillcard h3 { color: #e8eef7; font-size: 15px; margin-bottom: 3px; }
+    .skillcard .next { color: #6d7a91; font-size: 12.5px; margin-top: 5px; }
+    .pips { display: inline-flex; gap: 5px; margin-left: 8px; vertical-align: middle; }
+    .pip { width: 11px; height: 11px; border-radius: 50%; background: #223047; }
+    .pip.on { background: #2d6fe0; box-shadow: 0 0 6px rgba(45,111,224,.6); }
+    .xpcard {
+        background: #0f1622; border: 1px solid #1d2735; border-radius: 14px;
+        padding: 18px 22px; margin-bottom: 14px;
+    }
+    .xphead { display: flex; justify-content: space-between; color: #e8eef7; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .xpbar { height: 10px; background: #182236; border-radius: 5px; overflow: hidden; }
+    .xpfill { height: 100%; background: linear-gradient(90deg, #2d6fe0, #5fa8ff); border-radius: 5px; transition: width .4s; }
+    .xpsub { color: #6d7a91; font-size: 12.5px; margin-top: 7px; }
+
+    .admincard {
+        background: #0f1622; border: 1px solid #2c2415; border-radius: 14px;
+        padding: 16px 20px; margin-bottom: 12px;
+    }
+    .admincard h3 { color: #e8eef7; font-size: 15px; margin-bottom: 12px; }
+    .admincard h3 small { color: #6d7a91; font-weight: 400; margin-left: 8px; }
+    .adminrow { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .adminfield { display: flex; flex-direction: column; gap: 4px; }
+    .adminfield label { color: #5f6d85; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+    .adminfield input, .adminfield select {
+        background: #131c2b; color: #dbe4f1; border: 1px solid #283650;
+        border-radius: 7px; padding: 7px 9px; font-size: 13px; width: 110px; outline: none;
+    }
+    .adminfield input[type=number] { width: 84px; }
+    .adminMsg { font-size: 12.5px; margin-left: 10px; }
+    .adminMsg.ok { color: #5fd889; }
+    .adminMsg.err { color: #e08a97; }
+    .adminjob {
+        background: #0b111c; border: 1px solid #1a2333; border-radius: 10px;
+        padding: 12px 14px; margin-top: 10px;
+    }
+    .adminjobhead { color: #c7d2e3; font-size: 13.5px; font-weight: 600; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div class="tablet">
+        <div class="statusbar">
+            <span class="brand">LSPD&nbsp;NET</span>
+            <span id="clock">--:--</span>
+        </div>
+        <header>
+            <div class="badge">🛡️</div>
+            <div>
+                <h1>LSPD Terminal</h1>
+                <p>Leitstellen- und Personalübersicht · Mission Row PD</p>
+            </div>
+            <div class="spacer"></div>
+            <button class="btn" id="refreshBtn">⟳ Aktualisieren</button>
+            <button class="btn danger" id="closeBtn">✕ Schließen</button>
+        </header>
+        <nav>
+            <button data-tab="callouts" class="active">Einsätze</button>
+            <button data-tab="officers">Beamte</button>
+            <button data-tab="skills">Skills</button>
+            <button data-tab="dispatch">Leitstelle</button>
+            <button data-tab="admin" id="adminNav" style="display:none; color:#e8b64c;">Admin</button>
+        </nav>
+        <main>
+            <section id="tab-callouts" class="tab active"></section>
+            <section id="tab-officers" class="tab"></section>
+            <section id="tab-skills" class="tab"></section>
+            <section id="tab-admin" class="tab"></section>
+            <section id="tab-dispatch" class="tab">
+                <div class="genbox">
+                    <h2>Einsatz generieren</h2>
+                    <p>Erzeugt sofort einen Einsatz und benachrichtigt alle Beamten im Dienst.</p>
+                    <select id="calloutType">
+                        <option value="">Zufälliger Einsatz</option>
+                    </select>
+                    <button class="btn primary" id="generateBtn">Einsatz auslösen</button>
+                    <div id="genMsg"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script>
+const res = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'ws_tablet';
+const app = document.getElementById('app');
+let refreshTimer = null;
+
+function post(name, body) {
+    return fetch(`https://${res}/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+    }).then(r => r.json()).catch(() => ({}));
+}
+
+function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+let myCalloutUid = null;
+
+function renderCallouts(list) {
+    const el = document.getElementById('tab-callouts');
+    if (!list || list.length === 0) {
+        el.innerHTML = '<div class="empty"><span class="icon">📻</span>Aktuell keine aktiven Einsätze.</div>';
+        return;
+    }
+    const rows = list.map(c => `
+        <tr>
+            <td>#${c.uid}</td>
+            <td><span class="pill blue">${esc(c.code)}</span></td>
+            <td>${esc(c.label)}</td>
+            <td>${c.state === 'active'
+                ? '<span class="pill green">In Bearbeitung</span>'
+                : '<span class="pill amber">Offen</span>'}</td>
+            <td>${c.officers}</td>
+            <td>${esc(c.primary || '–')}</td>
+            <td>${c.arrests}</td>
+            <td>${c.uid === myCalloutUid
+                ? '<button class="btn danger small abortBtn">✕ Abbrechen</button>'
+                : (c.state === 'active'
+                    ? `<button class="btn small acceptBtn" data-uid="${c.uid}">Unterstützen</button>`
+                    : `<button class="btn primary small acceptBtn" data-uid="${c.uid}">Annehmen</button>`)}</td>
+        </tr>`).join('');
+    el.innerHTML = `<table>
+        <thead><tr><th>Nr.</th><th>Code</th><th>Einsatz</th><th>Status</th><th>Einheiten</th><th>Einsatzleiter</th><th>Festnahmen</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+}
+
+function renderOfficers(list) {
+    const el = document.getElementById('tab-officers');
+    if (!list || list.length === 0) {
+        el.innerHTML = '<div class="empty"><span class="icon">👮</span>Keine Beamten online.</div>';
+        return;
+    }
+    list.sort((a, b) => (b.rank - a.rank) || (b.xp - a.xp));
+    const rows = list.map(p => `
+        <tr>
+            <td>${esc(p.name)}</td>
+            <td>${esc(p.rankLabel)}</td>
+            <td>${p.xp} XP</td>
+            <td>${p.duty
+                ? '<span class="pill green">Im Dienst</span>'
+                : '<span class="pill gray">Außer Dienst</span>'}</td>
+            <td>${p.arrests}</td>
+            <td>${p.callouts}</td>
+        </tr>`).join('');
+    el.innerHTML = `<table>
+        <thead><tr><th>Name</th><th>Rang</th><th>Erfahrung</th><th>Status</th><th>Festnahmen</th><th>Einsätze</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+}
+
+function renderTypes(types, canGenerate) {
+    const sel = document.getElementById('calloutType');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Zufälliger Einsatz</option>' +
+        (types || []).map(t => `<option value="${esc(t.id)}">${esc(t.code)} – ${esc(t.label)}</option>`).join('');
+    sel.value = current;
+    document.getElementById('generateBtn').disabled = !canGenerate;
+}
+
+const branchDefs = {
+    weapons: {
+        icon: '🔫', label: 'Waffen',
+        levels: ['SMG im Waffenschrank', 'Pumpgun im Waffenschrank', 'Marksman-Gewehr im Waffenschrank'],
+    },
+    vehicles: {
+        icon: '🚓', label: 'Fahrzeuge',
+        levels: ['Motor- & Bremsen-Tuning I', 'Getriebe-Tuning + Turbo', 'Vollausbau + Panzerung'],
+    },
+    stamina: {
+        icon: '🏃', label: 'Ausdauer',
+        levels: ['Schnellere Ausdauer-Regeneration', 'Deutlich längere Sprints', 'Nahezu unerschöpfliche Ausdauer'],
+    },
+    medic: {
+        icon: '🩺', label: 'Medizin',
+        levels: ['15% schnellere Behandlungen', '30% schneller + 1 Extra-Reanimationsversuch', '45% schnellere Behandlungen'],
+    },
+};
+
+function renderSkills(skills, progress) {
+    const el = document.getElementById('tab-skills');
+    if (!skills) {
+        el.innerHTML = '<div class="empty"><span class="icon">🎯</span>Keine Skill-Daten verfügbar.</div>';
+        return;
+    }
+
+    let xpCard = '';
+    if (progress) {
+        let pct, sub;
+        if (progress.nextThreshold) {
+            const span = progress.nextThreshold - progress.currentThreshold;
+            pct = Math.max(0, Math.min(100, ((progress.xp - progress.currentThreshold) / span) * 100));
+            sub = `${progress.xp} / ${progress.nextThreshold} XP · nächster Rang: ${esc(progress.nextRankLabel)}`;
+        } else {
+            pct = 100;
+            sub = `${progress.xp} XP · Maximalrang erreicht`;
+        }
+        xpCard = `<div class="xpcard">
+            <div class="xphead"><span>⭐ ${esc(progress.rankLabel)}</span><span>${Math.floor(pct)}%</span></div>
+            <div class="xpbar"><div class="xpfill" style="width:${pct}%"></div></div>
+            <div class="xpsub">${sub}</div>
+        </div>`;
+    }
+    const max = skills.maxLevel || 3;
+    const branchList = (skills.branches || ['weapons', 'vehicles', 'stamina'])
+        .map(id => Object.assign({ id }, branchDefs[id] || { icon: '❔', label: id, levels: [] }));
+    const cards = branchList.map(b => {
+        const level = skills[b.id] || 0;
+        const pips = Array.from({ length: max }, (_, i) =>
+            `<span class="pip${i < level ? ' on' : ''}"></span>`).join('');
+        const next = level < max
+            ? `Nächste Stufe: ${esc(b.levels[level])}`
+            : 'Maximalstufe erreicht';
+        const btn = level < max
+            ? `<button class="btn primary skillBtn" data-branch="${b.id}" ${skills.points < 1 ? 'disabled' : ''}>Freischalten (1 Punkt)</button>`
+            : '';
+        return `<div class="skillcard">
+            <div class="icon">${b.icon}</div>
+            <div class="info">
+                <h3>${esc(b.label)} <span class="pips">${pips}</span></h3>
+                <div class="next">${next}</div>
+            </div>
+            ${btn}
+        </div>`;
+    }).join('');
+    el.innerHTML = `<div class="skillwrap">
+        ${xpCard}
+        <div class="points-banner">Verfügbare Skillpunkte: <b>${skills.points}</b> · +1 pro Beförderung</div>
+        ${cards}
+    </div>`;
+}
+
+const skillLevels = [0, 1, 2, 3];
+
+function renderAdmin(players, rankLists) {
+    const el = document.getElementById('tab-admin');
+    if (!players || players.length === 0) {
+        el.innerHTML = '<div class="empty"><span class="icon">🛠️</span>Keine Spieler online.</div>';
+        return;
+    }
+    const jobMeta = {
+        police:    { name: 'LSPD', icon: '🛡️', branches: ['weapons', 'vehicles', 'stamina'] },
+        ambulance: { name: 'EMS',  icon: '🚑', branches: ['medic', 'vehicles', 'stamina'] },
+    };
+    const branchLabel = { weapons: '🔫 Waffen', vehicles: '🚓 Fahrzeuge', stamina: '🏃 Ausdauer', medic: '🩺 Medizin' };
+    const levelOptions = (selected) => skillLevels.map(l =>
+        `<option value="${l}" ${l === selected ? 'selected' : ''}>${l}</option>`).join('');
+
+    el.innerHTML = players.map(p => {
+        const jobBlocks = Object.keys(jobMeta).map(jobId => {
+            const meta = jobMeta[jobId];
+            const c = (p.careers && p.careers[jobId]) || { rank: 0, xp: 0, skillpoints: 0 };
+            const ranks = (rankLists && rankLists[jobId]) || [];
+            const rankOptions = ranks.map(r =>
+                `<option value="${r.grade}" ${r.grade === c.rank ? 'selected' : ''}>${esc(r.label)}</option>`).join('');
+            const branchFields = meta.branches.map(b => `
+                <div class="adminfield"><label>${branchLabel[b]}</label>
+                    <select data-field="${b}">${levelOptions(c[b] ?? 0)}</select></div>`).join('');
+            const activeTag = p.job === jobId ? ' <span class="pill green">aktiv</span>' : '';
+            return `<div class="adminjob" data-source="${p.source}" data-job="${jobId}">
+                <div class="adminjobhead">${meta.icon} ${meta.name}${activeTag}</div>
+                <div class="adminrow">
+                    <div class="adminfield"><label>Rang</label>
+                        <select data-field="rank">${rankOptions}</select></div>
+                    <div class="adminfield"><label>XP</label>
+                        <input type="number" data-field="xp" min="0" value="${c.xp ?? 0}"></div>
+                    <div class="adminfield"><label>Skillpunkte</label>
+                        <input type="number" data-field="skillpoints" min="0" value="${c.skillpoints ?? 0}"></div>
+                    ${branchFields}
+                    <button class="btn primary small adminSaveBtn">Übernehmen</button>
+                    <span class="adminMsg"></span>
+                </div>
+            </div>`;
+        }).join('');
+        return `<div class="admincard">
+            <h3>${esc(p.name)} <small>ID ${p.source} · aktiv: ${p.job === 'ambulance' ? 'EMS' : 'LSPD'} · ${esc(p.rankLabel)}</small></h3>
+            ${jobBlocks}
+        </div>`;
+    }).join('');
+}
+
+function render(data) {
+    if (!data) return;
+    myCalloutUid = data.myCalloutUid ?? null;
+
+    // Branding je Fraktion (LSPD / EMS)
+    const ems = data.job === 'ambulance';
+    document.querySelector('.brand').textContent = ems ? 'EMS NET' : 'LSPD NET';
+    document.querySelector('.badge').textContent = ems ? '🚑' : '🛡️';
+    document.querySelector('header h1').textContent = ems ? 'EMS Terminal' : 'LSPD Terminal';
+    document.querySelector('header p').textContent = ems
+        ? 'Leitstellen- und Personalübersicht · Pillbox Medical'
+        : 'Leitstellen- und Personalübersicht · Mission Row PD';
+    renderCallouts(data.callouts);
+    renderOfficers(data.players);
+    renderSkills(data.skills, data.progress);
+    renderTypes(data.types, data.canGenerate);
+
+    const adminNav = document.getElementById('adminNav');
+    adminNav.style.display = data.isAdmin ? '' : 'none';
+    if (data.isAdmin) {
+        // Nicht neu rendern, waehrend der Admin gerade Werte bearbeitet
+        const editing = document.activeElement
+            && document.getElementById('tab-admin').contains(document.activeElement);
+        if (!editing) renderAdmin(data.players, data.rankLists);
+    }
+}
+
+async function refresh() {
+    const data = await post('refresh');
+    render(data);
+}
+
+function tick() {
+    const d = new Date();
+    document.getElementById('clock').textContent =
+        `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+setInterval(tick, 15000);
+
+window.addEventListener('message', (e) => {
+    const msg = e.data;
+    if (msg.action === 'open') {
+        app.classList.add('open');
+        tick();
+        render(msg.data);
+        clearInterval(refreshTimer);
+        refreshTimer = setInterval(refresh, (msg.refreshInterval || 5) * 1000);
+    } else if (msg.action === 'close') {
+        app.classList.remove('open');
+        clearInterval(refreshTimer);
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') post('close');
+});
+document.getElementById('closeBtn').addEventListener('click', () => post('close'));
+document.getElementById('refreshBtn').addEventListener('click', refresh);
+
+document.getElementById('tab-callouts').addEventListener('click', async (e) => {
+    if (e.target.classList.contains('abortBtn')) {
+        e.target.disabled = true;
+        const result = await post('abort');
+        if (result.data) render(result.data);
+    } else if (e.target.classList.contains('acceptBtn')) {
+        e.target.disabled = true;
+        await post('accept', { uid: Number(e.target.dataset.uid) });
+    }
+});
+
+document.getElementById('tab-admin').addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('adminSaveBtn')) return;
+    const block = e.target.closest('.adminjob');
+    const msg = block.querySelector('.adminMsg');
+    const changes = {};
+    block.querySelectorAll('[data-field]').forEach(inp => {
+        changes[inp.dataset.field] = Number(inp.value);
+    });
+    e.target.disabled = true;
+    msg.textContent = 'Speichere…';
+    msg.className = 'adminMsg';
+    const result = await post('adminUpdate', {
+        target: Number(block.dataset.source),
+        job: block.dataset.job,
+        changes,
+    });
+    msg.textContent = result.ok ? '✓ Gespeichert' : '✕ Fehlgeschlagen';
+    msg.className = 'adminMsg ' + (result.ok ? 'ok' : 'err');
+    e.target.disabled = false;
+    if (result.data) render(result.data);
+});
+
+document.getElementById('tab-skills').addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('skillBtn')) return;
+    e.target.disabled = true;
+    const result = await post('upgradeSkill', { branch: e.target.dataset.branch });
+    if (result.data) render(result.data);
+});
+
+document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+document.getElementById('generateBtn').addEventListener('click', async () => {
+    const msgEl = document.getElementById('genMsg');
+    msgEl.textContent = 'Einsatz wird erstellt…';
+    msgEl.className = '';
+    const result = await post('generate', { id: document.getElementById('calloutType').value });
+    if (result.ok) {
+        msgEl.textContent = '✓ Einsatz wurde ausgelöst.';
+        msgEl.className = 'ok';
+    } else {
+        msgEl.textContent = '✕ ' + (result.err || 'Einsatz konnte nicht erstellt werden.');
+        msgEl.className = 'err';
+    }
+    if (result.data) render(result.data);
+});
+</script>
+</body>
+</html>

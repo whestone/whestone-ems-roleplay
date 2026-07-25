@@ -1,0 +1,19 @@
+{
+    "emote_title": "Emote",
+    "emote_menu_title": "Emotes",
+    "emote_started": "%s - move to cancel.",
+    "emote_stop": "Stop emote",
+    "emote_no_vehicle": "Emotes are not possible inside a vehicle.",
+
+    "rp_title": "Roleplay",
+    "rp_empty": "Please provide text, e.g. /me waves politely.",
+
+    "coffee_title": "Coffee Machine",
+    "coffee_option": "Get coffee",
+    "coffee_pull": "Pouring coffee...",
+    "coffee_done": "Fresh coffee - you feel awake!",
+
+    "duty_board_title": "On-Duty Leaderboard",
+    "duty_own": "Your total on-duty time",
+    "duty_board_empty": "No on-duty time recorded yet."
+}
