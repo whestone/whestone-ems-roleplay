@@ -126,6 +126,8 @@ local function spawnVehicle(model)
             applyMod(13, tuning - 1)
             ToggleVehicleMod(veh, 18, true)
         end
+        -- Oberste Stufe: schusssichere Reifen (platzen nicht mehr durch Beschuss)
+        if tuning >= 3 then SetVehicleTyresCanBurst(veh, false) end
     end
     -- Spieler direkt auf den Fahrersitz setzen (SetPedIntoVehicle ist
     -- zuverlaessiger als der Warp-Task, gerade bei groesserer Distanz)

@@ -15,11 +15,12 @@ shared_scripts {
 }
 
 client_scripts {
-    'client/skillcheck.lua', -- zuerst: stellt WSSkillCheck bereit
+    'client/defi.lua', -- zuerst: stellt WSDefiMinigame bereit
     'client/station.lua',
     'client/treatment.lua',
     'client/callouts.lua',
     'client/revive.lua',
+    'client/transport.lua',
 }
 
 server_scripts {

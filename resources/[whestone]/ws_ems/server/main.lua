@@ -152,6 +152,22 @@ RegisterNetEvent('ws_ems:deliverPatient', function(netId)
     DeleteEntity(ent)
 end)
 
+-- Patient per gerufenem NPC-RTW abtransportiert (kein Distanz-Check, da der
+-- NPC-Wagen den Transport uebernimmt; etwas weniger XP als die Eigenlieferung)
+RegisterNetEvent('ws_ems:transportPatient', function(netId)
+    local src = source
+    if not isEms(src) or not exports.ws_core:IsOnDuty(src) then return end
+    local ent = NetworkGetEntityFromNetworkId(netId)
+    if not ent or ent == 0 or not DoesEntityExist(ent) then return end
+    local st = Entity(ent).state
+    if not st['ws:patient'] or st['ws:patient_state'] ~= 'stable' then return end
+
+    exports.ws_core:AddXP(src, WSEms.XP.transport or WSEms.XP.deliver, locale('xp_transport'))
+    exports.ws_core:AddStat(src, 'patients', 1)
+    TriggerEvent('ws_ems:patientDelivered', netId, src)
+    DeleteEntity(ent)
+end)
+
 AddEventHandler('ws_core:dutyChanged', function(src, onDuty)
     if not onDuty then deleteVehicle(src) end
 end)

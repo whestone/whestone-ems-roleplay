@@ -1,0 +1,13 @@
+{
+    "hud_title": "Fahrzeug",
+    "engine_on": "Motor gestartet.",
+    "engine_off": "Motor abgestellt.",
+    "engine_no_fuel": "Tank leer – der Motor springt nicht an.",
+
+    "fuel_title": "Tankstelle",
+    "fuel_option": "Fahrzeug betanken",
+    "fuel_refueling": "Fahrzeug wird betankt...",
+    "fuel_done": "Tank voll.",
+    "fuel_full": "Der Tank ist bereits voll.",
+    "fuel_no_vehicle": "Kein Fahrzeug in Reichweite der Zapfsäule."
+}

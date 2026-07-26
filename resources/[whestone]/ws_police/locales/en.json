@@ -49,6 +49,7 @@
     "tow_enroute": "The tow truck is on its way.",
     "tow_pickup": "Vehicle loaded - being hauled away.",
     "tow_failed": "No tow truck available - no route found.",
+    "backup_no_skill": "No backup available - unlock the 'Support' skill first (Tablet > Skills).",
     "tow_error": "Tow request aborted - please try again.",
     "tow_limit":"All tow trucks are busy - wait until one is available.",
     "stop_title": "Stop Signal",

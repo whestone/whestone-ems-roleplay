@@ -141,14 +141,41 @@ end)
 
 local prisonerVan = {} -- Gefangener -> Fahrzeug, in das er gesetzt wurde
 
+-- Sitzt (ausser exceptPed) noch ein Gefangener in diesem Fahrzeug?
+local function vehHasOtherPrisoner(veh, exceptPed)
+    for p, v in pairs(prisonerVan) do
+        if v == veh and p ~= exceptPed and DoesEntityExist(p) then return true end
+    end
+    return false
+end
+
+-- Tuerverriegelung des Gefangenentransports. Zustand 2 (verriegelt) haelt die
+-- Ped-KI drin - sperrt aber ALLE aus, auch den Officer beim Einsteigen. Daher
+-- dynamisch (im Waechter-Thread): nur verriegeln, solange der Officer SELBST
+-- faehrt; steigt er aus, wird entriegelt, damit er wieder einsteigen kann.
+-- Aus einem verriegelten Fahrzeug aussteigen kann der Spieler weiterhin.
+local function setPrisonerLock(veh, locked)
+    if not veh or veh == 0 or not DoesEntityExist(veh) then return end
+    SetVehicleDoorsLocked(veh, locked and 2 or 1)
+end
+
+local function unlockVehicle(veh)
+    setPrisonerLock(veh, false)
+end
+
 CreateThread(function()
     while true do
         local tracking = false
         for ped, veh in pairs(prisonerVan) do
             if not DoesEntityExist(ped) or not DoesEntityExist(veh) or not cuffedPeds[ped] then
                 prisonerVan[ped] = nil
+                -- letzter Gefangener raus -> Fahrzeug wieder entriegeln
+                if not vehHasOtherPrisoner(veh, ped) then unlockVehicle(veh) end
             else
                 tracking = true
+                -- Tueren nur sperren, solange der Officer selbst faehrt -
+                -- sonst kaeme er beim Einsteigen nicht mehr ins Fahrzeug
+                setPrisonerLock(veh, cache.vehicle == veh)
                 -- Nur eingreifen, wenn der Gefangene das Fahrzeug wirklich
                 -- verlassen hat - einen sitzenden Ped nicht anfassen (kein Sprung)
                 if NetworkHasControlOfEntity(ped) and not IsPedInVehicle(ped, veh, false) then
@@ -203,6 +230,8 @@ local function arrestPed(ped)
         RemoveAllPedWeapons(ped, true)
         playCuffedIdle(ped)
         SetEnableHandcuffs(ped, true)
+        -- Neutrale Gruppe: die KI-Verstaerkung schiesst nicht mehr auf ihn
+        SetPedRelationshipGroupHash(ped, joaat('WS_PRISONER'))
         SetBlockingOfNonTemporaryEvents(ped, true)
         SetPedCanBeDraggedOut(ped, false)
         SetPedFleeAttributes(ped, 0, false)
@@ -262,6 +291,8 @@ local function seatPedInVehicle(ped, veh)
     -- (einmalig setzen - periodisches Neusetzen erzeugt Task-Luecken!)
     TaskSetBlockingOfNonTemporaryEvents(ped, true)
     prisonerVan[ped] = veh -- fuer den Ausbrecher-Wächter merken
+    -- Verriegelung uebernimmt der Waechter-Thread dynamisch (nur waehrend der
+    -- Officer faehrt), damit der Officer jetzt noch einsteigen kann.
     SetNewWaypoint(dropoff.x, dropoff.y)
     lib.notify({ title = locale('dispatch_title'), description = locale('bring_to_jail'), type = 'inform' })
 end
@@ -276,7 +307,9 @@ local function seatPed(ped)
 end
 
 local function unseatPed(ped)
+    local veh = prisonerVan[ped]
     prisonerVan[ped] = nil -- gewolltes Ausladen: Ausbrecher-Wächter nicht mehr aktiv
+    if veh and not vehHasOtherPrisoner(veh, ped) then unlockVehicle(veh) end
     if not EnsureControl(ped) then return end
     local coords = GetEntityCoords(cache.ped)
     ClearPedTasksImmediately(ped)
@@ -292,7 +325,10 @@ local function deliverPed(ped)
         disable = { move = true, combat = true },
     })
     if not ok then return end
+    local veh = prisonerVan[ped]
+    prisonerVan[ped] = nil
     TriggerServerEvent('ws_dispatch:deliverSuspect', NetworkGetNetworkIdFromEntity(ped))
+    if veh and not vehHasOtherPrisoner(veh, ped) then unlockVehicle(veh) end
 end
 
 -- Sperre gegen Doppel-Behandlung, bis das Statebag-Update repliziert ist

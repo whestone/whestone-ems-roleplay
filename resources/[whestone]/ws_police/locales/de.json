@@ -49,6 +49,7 @@
     "tow_enroute": "Der Abschleppwagen ist unterwegs.",
     "tow_pickup": "Fahrzeug aufgeladen – wird abtransportiert.",
     "tow_failed": "Kein Abschleppwagen verfügbar – keine Anfahrtsroute gefunden.",
+    "backup_no_skill": "Keine Verstärkung verfügbar – schalte zuerst den Skill Unterstützung frei (Tablet › Skills).",
     "tow_error": "Abschleppauftrag abgebrochen – bitte erneut versuchen.",
     "tow_limit":"Alle Abschleppwagen sind im Einsatz – warte, bis einer frei ist.",
     "stop_title": "Anhaltezeichen",

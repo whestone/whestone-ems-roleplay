@@ -52,7 +52,8 @@ WSEms.Emergencies = {
         patientState = 'trauma',
         xp = 70,
         peds = { 'a_m_y_business_01', 'a_f_y_business_02', 'a_m_m_eastsa_01', 'a_f_m_soucent_01' },
-        wreck = true, -- Unfallwrack neben dem Patienten
+        wreck = true,     -- Unfallwrack neben jedem Patienten
+        maxPatients = 3,  -- zufaellig 1-3 Verletzte (+ je ein Wrack)
         locations = {
             vector4(296.0, -585.0, 43.2, 0.0),    -- Pillbox Hill
             vector4(-256.0, -715.0, 33.5, 0.0),   -- Alta St

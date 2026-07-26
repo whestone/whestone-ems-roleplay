@@ -80,11 +80,29 @@ lib.callback.register('ws_police:returnVehicle', function(src)
     return true
 end)
 
--- Bei Dienstende oder Disconnect wird das Fahrzeug eingezogen
+-- Dienstantritt: gespeicherte Verstaerkungs-Auswahl wiederherstellen
+-- (persistent in stats.backupTier). Dienstende: Fahrzeug einziehen.
 AddEventHandler('ws_core:dutyChanged', function(src, onDuty)
-    if not onDuty then
+    if onDuty then
+        local tier = exports.ws_core:GetStat(src, 'backupTier')
+        if tier and tier >= 1 then
+            Player(src).state:set('ws:backupTier', tier, true)
+        end
+    else
         deleteVehicle(src)
     end
+end)
+
+-- Verstaerkungs-Auswahl speichern (aus der Leitstelle im Tablet). Server-seitig
+-- gegen die tatsaechliche Freischalt-Stufe validiert und persistent abgelegt.
+RegisterNetEvent('ws_police:saveBackupTier', function(tier)
+    local src = source
+    tier = tonumber(tier)
+    if not isPolice(src) or not tier then return end
+    local max = math.min(3, exports.ws_core:GetSkill(src, 'support') or 0)
+    if tier < 1 or tier > max then return end
+    exports.ws_core:SetStat(src, 'backupTier', tier)
+    Player(src).state:set('ws:backupTier', tier, true)
 end)
 
 AddEventHandler('playerDropped', function()

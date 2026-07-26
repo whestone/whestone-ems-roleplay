@@ -217,6 +217,8 @@ local function spawnVehicle(model)
         if tuning.suspension then applyMod(15, tuning.suspension) end
         if tuning.armor then applyMod(16, tuning.armor) end
         if tuning.turbo then ToggleVehicleMod(veh, 18, true) end
+        -- Oberste Stufe: schusssichere Reifen (platzen nicht mehr durch Beschuss)
+        if tuning.bulletproofTires then SetVehicleTyresCanBurst(veh, false) end
     end
 
     TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)

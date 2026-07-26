@@ -1,0 +1,13 @@
+{
+    "hud_title": "Vehicle",
+    "engine_on": "Engine started.",
+    "engine_off": "Engine switched off.",
+    "engine_no_fuel": "Tank empty - the engine won't start.",
+
+    "fuel_title": "Gas Station",
+    "fuel_option": "Refuel vehicle",
+    "fuel_refueling": "Refueling...",
+    "fuel_done": "Tank full.",
+    "fuel_full": "The tank is already full.",
+    "fuel_no_vehicle": "No vehicle within reach of the pump."
+}

@@ -56,7 +56,15 @@ WSEms.SupplyHealsSelf = true
 WSEms.XP = {
     diagnose = 10,  -- Patient untersuchen
     treat = 40,     -- erfolgreich behandeln/reanimieren
-    deliver = 60,   -- Patient ins Krankenhaus einliefern
+    deliver = 60,   -- Patient selbst ins Krankenhaus einliefern
+    transport = 40, -- Patient per gerufenem NPC-RTW abtransportieren lassen
+}
+
+-- Abtransport per NPC-Rettungswagen (analog zum Gefangenentransporter der Cops)
+WSEms.Transport = {
+    vehicle = 'ambulance',
+    driver = 's_m_m_paramedic_01',
+    pickupRadius = 14.0, -- laedt alle stabilen Patienten in diesem Umkreis ein
 }
 
 -- Max. Distanz Sanitaeter <-> Notaufnahme fuer die Einlieferung
@@ -68,9 +76,14 @@ WSEms.Durations = {
     treat = 8000,
 }
 
--- Schwierigkeit des Defibrillator-Minispiels (lib.skillCheck):
--- moegliche Werte 'easy' | 'medium' | 'hard', beliebig viele Runden
-WSEms.DefiChecks = { 'easy', 'easy', 'medium' }
+-- Defibrillator-Minispiel (eigenes Timing-Minispiel, unabhaengig von lib.skillCheck).
+-- Marker pendelt ueber einen Balken, im gruenen Trefferfeld E druecken.
+WSEms.Defi = {
+    rounds = 3,              -- so viele Treffer in Folge fuer eine erfolgreiche Reanimation
+    hitZone = 0.10,          -- halbe Breite des Trefferfelds (groesser = leichter)
+    hitZonePerSkill = 0.03,  -- pro Medizin-Skill-Stufe breiteres Trefferfeld
+    speed = 1.6,             -- Marker-Durchlaeufe pro Sekunde (kleiner = leichter); jede Runde schneller
+}
 
 -- Notfall-Engine
 WSEms.Callout = {

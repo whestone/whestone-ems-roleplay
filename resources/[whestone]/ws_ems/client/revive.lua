@@ -47,13 +47,7 @@ local function revive(ped)
     end
 
     -- Abschluss wie bei der Reanimation: Defibrillator-Minispiel
-    local success = WSSkillCheck(WSEms.DefiChecks)
-    if success == nil then
-        TriggerServerEvent('ws_core:reviveProgress', serverId, false)
-        lib.notify({ title = locale('revive_title'), description = locale('defi_unavailable'), type = 'error' })
-        return
-    end
-    if not success then
+    if not WSDefiMinigame() then
         TriggerServerEvent('ws_core:reviveProgress', serverId, false)
         lib.notify({ title = locale('revive_title'), description = locale('revive_failed'), type = 'error' })
         return
