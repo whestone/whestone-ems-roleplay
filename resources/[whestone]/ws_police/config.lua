@@ -63,7 +63,7 @@ WSPolice.SkillWeapons = {
 WSPolice.VehicleTuning = {
     [1] = { engine = 1, brakes = 1 },
     [2] = { engine = 2, brakes = 2, transmission = 1, turbo = true },
-    [3] = { engine = 3, brakes = 2, transmission = 2, suspension = 3, turbo = true, armor = 4 },
+    [3] = { engine = 3, brakes = 2, transmission = 2, suspension = 3, turbo = true, armor = 4, bulletproofTires = true },
 }
 
 -- Anhaltezeichen (Taste U): stoppt anvisierte Fahrzeuge und Personen
@@ -83,14 +83,21 @@ WSPolice.Equipment = {
     },
 }
 
--- KI-Verstaerkung (Taste F7): eine Streife faehrt an und unterstuetzt
+-- KI-Verstaerkung (Taste F7): eine Streife faehrt an und unterstuetzt.
+-- Freischaltung und Ausbaustufe ueber den Skill-Zweig "Unterstuetzung"
+-- (ws:skill_support). OHNE Skillpunkt (Stufe 0) gibt es KEINE Verstaerkung.
 WSPolice.Backup = {
-    vehicle = 'police',
-    ped = 's_m_y_cop_01',
-    officers = 2,             -- Beamte je Streife
-    weapon = 'WEAPON_PISTOL', -- Bewaffnung bei feindlichen Verdaechtigen
     cooldown = 60,            -- Sekunden zwischen zwei Anforderungen
     despawnDistance = 150.0,  -- entfernt sich der Officer weiter, verschwindet die Streife
+
+    -- Stufe 1-3 des Unterstuetzungs-Skills. `officers` = Anzahl Beamte je Stufe
+    -- (frei einstellbar, Standard 2; wird auf die Sitzplaetze des Fahrzeugs
+    -- begrenzt). `label` erscheint in der Leitstellen-Auswahl im Tablet.
+    Tiers = {
+        [1] = { vehicle = 'police',  ped = 's_m_y_cop_01',  weapon = 'WEAPON_PISTOL',       armour = 50,  accuracy = 55, officers = 2, label = 'Streife (Stanier) · Pistolen' },
+        [2] = { vehicle = 'police3', ped = 's_m_y_cop_01',  weapon = 'WEAPON_SMG',          armour = 75,  accuracy = 65, officers = 2, label = 'Interceptor · MPs' },
+        [3] = { vehicle = 'riot',    ped = 's_m_y_swat_01', weapon = 'WEAPON_CARBINERIFLE', armour = 100, accuracy = 80, officers = 2, label = 'Riot · NOOSE (Sturmgewehre)' },
+    },
 }
 
 -- Dienstfahrzeuge (Vanilla-Modelle), Rangbeschraenkung ueber minRank

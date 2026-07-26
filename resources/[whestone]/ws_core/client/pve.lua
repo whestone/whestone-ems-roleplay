@@ -7,6 +7,9 @@ CreateThread(function()
         EnableDispatchService(i, false)
     end
 
+    -- GTA-Flug-Score beim Heli-/Flugzeugfliegen abschalten
+    SetAudioFlag('DisableFlightMusic', true)
+
     -- Ambient-Gangs (Ballas, Vagos, Families etc.) greifen Spieler nicht mehr an
     local playerGroup = joaat('PLAYER')
     local gangs = {
@@ -33,6 +36,7 @@ CreateThread(function()
         SetDispatchCopsForPlayer(cache.playerId, false)
         SetMaxWantedLevel(0)
         SetWantedLevelMultiplier(0.0)
+        SetAudioFlag('DisableFlightMusic', true) -- Flug-Score aus (nach Respawn erneut)
         Wait(5000)
     end
 end)

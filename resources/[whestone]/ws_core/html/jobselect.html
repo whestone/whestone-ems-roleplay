@@ -44,7 +44,10 @@
     .card.ems:hover  { border-color: #d23c3c; box-shadow: 0 18px 60px rgba(210,60,60,.35); }
 
     .emblem { font-size: 74px; margin-bottom: 16px; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)); }
-    .card h2 { color: #eef3fa; font-size: 21px; margin-bottom: 4px; }
+    /* Feste Zwei-Zeilen-Hoehe: LSPD bricht um, EMS nicht - so bleiben die
+       Feature-Listen beider Karten trotzdem auf gleicher Hoehe. */
+    .card h2 { color: #eef3fa; font-size: 21px; line-height: 1.25; min-height: 2.5em;
+        margin-bottom: 4px; display: flex; align-items: center; justify-content: center; }
     .card .sub { font-size: 12.5px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
     .card.lspd .sub { color: #6ea8ff; }
     .card.ems .sub  { color: #ff8a7a; }

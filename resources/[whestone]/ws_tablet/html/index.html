@@ -187,6 +187,11 @@
             <section id="tab-skills" class="tab"></section>
             <section id="tab-admin" class="tab"></section>
             <section id="tab-dispatch" class="tab">
+                <div class="genbox" id="backupBox" style="display:none;">
+                    <h2>Verstärkung (F7)</h2>
+                    <p>Wähle, welche Verstärkung mit F7 gerufen wird. Höhere Stufen schaltest du über den Skill „Unterstützung" frei.</p>
+                    <div id="backupOptions"></div>
+                </div>
                 <div class="genbox">
                     <h2>Einsatz generieren</h2>
                     <p>Erzeugt sofort einen Einsatz und benachrichtigt alle Beamten im Dienst.</p>
@@ -281,6 +286,44 @@ function renderTypes(types, canGenerate) {
     document.getElementById('generateBtn').disabled = !canGenerate;
 }
 
+function renderBackup(backup) {
+    const box = document.getElementById('backupBox');
+    const opts = document.getElementById('backupOptions');
+    if (!backup) { box.style.display = 'none'; return; } // nur Polizei
+    box.style.display = '';
+
+    const level = backup.level || 0;
+    const selected = backup.selected || 0;
+    if (level < 1) {
+        opts.innerHTML = '<div style="padding:12px 4px;color:#8b97a8;">🔒 Noch keine Verstärkung freigeschaltet – investiere einen Punkt in „Unterstützung" (Tab „Skills").</div>';
+        return;
+    }
+    opts.innerHTML = (backup.tiers || []).map(t => {
+        const locked = !t.unlocked, active = t.tier === selected;
+        const border = active ? '#2d6fe0' : (locked ? '#262b34' : '#39404d');
+        const bg = active ? 'rgba(45,111,224,.16)' : 'rgba(255,255,255,.03)';
+        const right = locked ? '🔒' : (active ? '<span style="color:#6ea8ff;font-weight:600;">● aktiv</span>' : '<span style="color:#8b97a8;">wählen</span>');
+        return `<button class="backupOpt" data-tier="${t.tier}" ${locked ? 'disabled' : ''}
+            style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:7px 0;padding:11px 14px;
+                   border:1px solid ${border};background:${bg};border-radius:10px;color:#dfe6f0;
+                   cursor:${locked ? 'not-allowed' : 'pointer'};opacity:${locked ? '.5' : '1'};font-family:inherit;">
+            <span style="font-size:18px;font-weight:700;min-width:22px;">${t.tier}</span>
+            <span style="flex:1;">
+                <span style="display:block;font-weight:600;">${esc(t.label)}</span>
+                <span style="font-size:12px;color:#8b97a8;">${t.officers} Beamte</span>
+            </span>
+            <span style="font-size:13px;">${right}</span>
+        </button>`;
+    }).join('');
+}
+
+document.getElementById('backupOptions').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.backupOpt');
+    if (!btn || btn.disabled) return;
+    const result = await post('setBackupTier', { tier: parseInt(btn.dataset.tier, 10) });
+    if (result && result.data) render(result.data);
+});
+
 const branchDefs = {
     weapons: {
         icon: '🔫', label: 'Waffen',
@@ -293,6 +336,10 @@ const branchDefs = {
     stamina: {
         icon: '🏃', label: 'Ausdauer',
         levels: ['Schnellere Ausdauer-Regeneration', 'Deutlich längere Sprints', 'Nahezu unerschöpfliche Ausdauer'],
+    },
+    support: {
+        icon: '🚔', label: 'Unterstützung',
+        levels: ['Stanier + 2 Beamte mit Pistolen', 'Interceptor + 2 Beamte mit MPs', 'Riot + 2 NOOSE mit Sturmgewehren'],
     },
     medic: {
         icon: '🩺', label: 'Medizin',
@@ -362,10 +409,10 @@ function renderAdmin(players, rankLists) {
         return;
     }
     const jobMeta = {
-        police:    { name: 'LSPD', icon: '🛡️', branches: ['weapons', 'vehicles', 'stamina'] },
+        police:    { name: 'LSPD', icon: '🛡️', branches: ['weapons', 'vehicles', 'stamina', 'support'] },
         ambulance: { name: 'EMS',  icon: '🚑', branches: ['medic', 'vehicles', 'stamina'] },
     };
-    const branchLabel = { weapons: '🔫 Waffen', vehicles: '🚓 Fahrzeuge', stamina: '🏃 Ausdauer', medic: '🩺 Medizin' };
+    const branchLabel = { weapons: '🔫 Waffen', vehicles: '🚓 Fahrzeuge', stamina: '🏃 Ausdauer', medic: '🩺 Medizin', support: '🚔 Unterstützung' };
     const levelOptions = (selected) => skillLevels.map(l =>
         `<option value="${l}" ${l === selected ? 'selected' : ''}>${l}</option>`).join('');
 
@@ -418,6 +465,7 @@ function render(data) {
     renderOfficers(data.players);
     renderSkills(data.skills, data.progress);
     renderTypes(data.types, data.canGenerate);
+    renderBackup(data.backup);
 
     const adminNav = document.getElementById('adminNav');
     adminNav.style.display = data.isAdmin ? '' : 'none';

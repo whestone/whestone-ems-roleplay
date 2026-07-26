@@ -30,6 +30,7 @@
     "state_stable": "Stabil – transportfähig.",
     "treat_done": "Patient ist stabilisiert und transportfähig.",
     "defi_charge": "Defibrillator laden – folge dem Rhythmus!",
+    "defi_shock_hint": "Schock %s/%s – im grünen Bereich [E] drücken!",
     "defi_failed": "Reanimation fehlgeschlagen – erneut versuchen!",
     "defi_unavailable": "Defibrillator nicht bereit – bitte kurz warten und erneut versuchen.",
     "defi_failed_count":"Reanimation fehlgeschlagen – noch %s Versuch(e), bevor der Patient verloren ist!",
@@ -67,6 +68,18 @@
     "xp_diagnose": "Diagnose",
     "xp_treat": "Behandlung",
     "xp_deliver": "Einlieferung",
+    "xp_transport": "Abtransport",
+
+    "transport_title": "Rettungswagen",
+    "transport_target": "RTW zum Abtransport rufen",
+    "transport_requesting": "RTW wird angefordert...",
+    "transport_enroute": "Ein RTW ist zu dir unterwegs.",
+    "transport_pickup": "Patienten verladen und abtransportiert.",
+    "transport_failed": "Kein RTW verfügbar – keine Anfahrtsroute gefunden.",
+    "transport_none": "Keine transportfähigen Patienten in der Nähe.",
+
+    "patient_delivered_more": "Patient eingeliefert – noch %s weitere.",
+    "patient_lost_one": "Ein Patient ist verstorben – kümmere dich um die übrigen.",
 
     "dispatch_title": "Leitstelle",
     "offer_desc": "Notfall nahe %s. Annehmen mit Taste Y.",

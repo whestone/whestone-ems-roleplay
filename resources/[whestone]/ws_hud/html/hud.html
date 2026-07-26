@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; user-select: none; }
+    html, body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+
+    #hud {
+        /* bottom hoch genug, dass GTA-Straßennamen und das FiveM-Logo
+           (beide unten rechts) den Tacho nicht überdecken */
+        position: absolute; right: 26px; bottom: 135px;
+        width: 200px; padding: 14px 16px 12px;
+        background: linear-gradient(180deg, rgba(16,22,32,.86) 0%, rgba(8,11,17,.92) 100%);
+        border: 1px solid rgba(70,90,120,.35); border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.5);
+        display: none;
+    }
+    #hud.on { display: block; }
+
+    /* --- Rundtacho --- */
+    .gauge { position: relative; width: 168px; height: 118px; margin: 0 auto; }
+    .gauge svg { width: 100%; height: 100%; transform: rotate(135deg); }
+    .track { fill: none; stroke: rgba(90,110,140,.22); stroke-width: 11; stroke-linecap: round; }
+    .fill  { fill: none; stroke: #35c46a; stroke-width: 11; stroke-linecap: round;
+             transition: stroke-dasharray .12s linear, stroke .2s ease; }
+
+    .readout { position: absolute; inset: 0; display: flex; flex-direction: column;
+               align-items: center; justify-content: center; padding-top: 14px; }
+    .speed { color: #eef3fa; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .unit  { color: #6f7f96; font-size: 11px; letter-spacing: 3px; margin-top: 2px; }
+
+    /* --- Statuszeile --- */
+    .status { display: flex; gap: 8px; margin-top: 8px; }
+    .pill {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+        padding: 6px 4px; border-radius: 9px; font-size: 11px; font-weight: 600; letter-spacing: .3px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(90,110,140,.2);
+        color: #6f7f96; transition: all .18s ease;
+    }
+    .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #566; box-shadow: none; transition: all .18s ease; }
+
+    .pill.motor.on  { color: #7fe0a0; border-color: rgba(53,196,106,.4); background: rgba(53,196,106,.1); }
+    .pill.motor.on  .dot { background: #35c46a; box-shadow: 0 0 8px #35c46a; }
+    .pill.motor.off { color: #e88; border-color: rgba(210,70,70,.4); background: rgba(210,70,70,.1); }
+    .pill.motor.off .dot { background: #d24646; box-shadow: 0 0 8px #d24646; }
+
+    .pill.blau { display: none; }
+    .pill.blau.show { display: flex; }
+    .pill.blau.on  { color: #7db4ff; border-color: rgba(45,111,224,.5); background: rgba(45,111,224,.14);
+                     animation: blaupulse 1s ease-in-out infinite; }
+    .pill.blau.on  .dot { background: #2d6fe0; box-shadow: 0 0 9px #4d8bff; }
+    @keyframes blaupulse { 0%,100% { border-color: rgba(45,111,224,.5); } 50% { border-color: rgba(120,180,255,.9); } }
+
+    /* --- Tank --- */
+    .fuel { display: none; align-items: center; gap: 8px; margin-top: 9px; }
+    .fuel.show { display: flex; }
+    .fuel .ico { font-size: 13px; }
+    .fuel .bar { flex: 1; height: 7px; border-radius: 6px; background: rgba(90,110,140,.2); overflow: hidden; }
+    .fuel .lvl { height: 100%; width: 100%; border-radius: 6px; background: #35c46a; transition: width .3s ease, background .3s ease; }
+    .fuel .pct { color: #9fb0c6; font-size: 11px; font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+    .fuel.low .ico { animation: lowblink 1s steps(1) infinite; }
+    .fuel.low .lvl { background: #e0a12d; }
+    .fuel.crit .lvl { background: #d24646; }
+    @keyframes lowblink { 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+<div id="hud">
+    <div class="gauge">
+        <svg viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="50"></circle>
+            <circle class="fill" id="fill" cx="60" cy="60" r="50"></circle>
+        </svg>
+        <div class="readout">
+            <div class="speed" id="speed">0</div>
+            <div class="unit">KM/H</div>
+        </div>
+    </div>
+
+    <div class="status">
+        <div class="pill motor off" id="motor"><span class="dot"></span><span>MOTOR</span></div>
+        <div class="pill blau" id="blau"><span class="dot"></span><span>BLAULICHT</span></div>
+    </div>
+
+    <div class="fuel" id="fuel">
+        <span class="ico">⛽</span>
+        <div class="bar"><div class="lvl" id="fuelLvl"></div></div>
+        <span class="pct" id="fuelPct">100%</span>
+    </div>
+</div>
+
+<script>
+const hud = document.getElementById('hud');
+const elSpeed = document.getElementById('speed');
+const elFill = document.getElementById('fill');
+const elMotor = document.getElementById('motor');
+const elBlau = document.getElementById('blau');
+const elFuel = document.getElementById('fuel');
+const elFuelLvl = document.getElementById('fuelLvl');
+const elFuelPct = document.getElementById('fuelPct');
+
+// 270°-Bogen: Umfang eines r=50-Kreises = 314.16; sichtbarer Track = 75%
+const CIRC = 2 * Math.PI * 50;
+const ARC = CIRC * 0.75;
+let maxSpeed = 200;
+
+elFill.style.strokeDasharray = `0 ${CIRC}`;
+document.querySelector('.track').style.strokeDasharray = `${ARC} ${CIRC}`;
+
+function speedColor(frac) {
+    if (frac < 0.55) return '#35c46a';
+    if (frac < 0.8) return '#e0c02d';
+    return '#d24646';
+}
+
+function update(d) {
+    maxSpeed = d.maxSpeed || maxSpeed;
+    const spd = Math.max(0, Math.round(d.speed || 0));
+    elSpeed.textContent = spd;
+
+    const frac = Math.min(1, spd / maxSpeed);
+    elFill.style.strokeDasharray = `${frac * ARC} ${CIRC}`;
+    elFill.style.stroke = speedColor(frac);
+
+    elMotor.classList.toggle('on', !!d.engine);
+    elMotor.classList.toggle('off', !d.engine);
+
+    elBlau.classList.toggle('show', !!d.emergency);
+    elBlau.classList.toggle('on', !!d.lights);
+
+    if (d.fuelShown) {
+        elFuel.classList.add('show');
+        const f = Math.max(0, Math.min(100, d.fuel || 0));
+        elFuelLvl.style.width = f + '%';
+        elFuelPct.textContent = Math.round(f) + '%';
+        elFuel.classList.toggle('low', f <= (d.lowAt || 15) && f > 5);
+        elFuel.classList.toggle('crit', f <= 5);
+    } else {
+        elFuel.classList.remove('show');
+    }
+}
+
+window.addEventListener('message', (e) => {
+    const msg = e.data;
+    if (msg.action === 'update') {
+        hud.classList.add('on');
+        update(msg);
+    } else if (msg.action === 'hide') {
+        hud.classList.remove('on');
+    }
+});
+</script>
+</body>
+</html>

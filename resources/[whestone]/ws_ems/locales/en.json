@@ -24,6 +24,7 @@
     "state_stable": "Stable - ready for transport.",
     "treat_done": "Patient is stabilized and ready for transport.",
     "defi_charge": "Charging defibrillator - follow the rhythm!",
+    "defi_shock_hint": "Shock %s/%s - press [E] in the green zone!",
     "defi_failed": "Resuscitation failed - try again!",
     "defi_unavailable": "Defibrillator not ready - please wait a moment and try again.",
     "defi_failed_count":"Resuscitation failed - %s attempt(s) left before the patient is lost!",
@@ -61,6 +62,18 @@
     "xp_diagnose":"Diagnosis",
     "xp_treat": "Treatment",
     "xp_deliver": "Admission",
+    "xp_transport": "Transport",
+
+    "transport_title": "Ambulance",
+    "transport_target": "Call ambulance for transport",
+    "transport_requesting": "Requesting ambulance...",
+    "transport_enroute": "An ambulance is on its way to you.",
+    "transport_pickup": "Patients loaded and transported.",
+    "transport_failed": "No ambulance available - no route found.",
+    "transport_none": "No transportable patients nearby.",
+
+    "patient_delivered_more": "Patient admitted - %s more to go.",
+    "patient_lost_one": "A patient has died - tend to the others.",
 
     "dispatch_title": "Dispatch",
     "offer_desc": "Emergency near %s. Accept with key Y.",

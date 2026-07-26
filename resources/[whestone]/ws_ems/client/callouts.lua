@@ -66,8 +66,44 @@ local function forceDownAnim(ped)
     SetBlockingOfNonTemporaryEvents(ped, true)
 end
 
+-- Verteil-Offsets fuer mehrere Verletzte rund um den Einsatzort
+local PATIENT_SPOTS = { { 0.0, 0.0 }, { 6.0, 2.5 }, { -5.0, 4.5 } }
+
+local function spawnAccidentPatient(ctx, callout, d, i)
+    local c = callout.coords
+    local spot = PATIENT_SPOTS[i] or { math.random(-6, 6) * 1.0, math.random(-6, 6) * 1.0 }
+    local sx, sy = c.x + spot[1], c.y + spot[2]
+    local heading = ((c.w or 0.0) + (i - 1) * 55.0) % 360.0
+
+    local hash = joaat(d.peds[math.random(#d.peds)])
+    lib.requestModel(hash, 10000)
+    local ped = CreatePed(4, hash, sx, sy, c.z, heading, true, true)
+    SetModelAsNoLongerNeeded(hash)
+    SetEntityAsMissionEntity(ped, true, true)
+    SetEntityHealth(ped, 150)
+    forceDownAnim(ped)
+    ctx.patients[#ctx.patients + 1] = ped
+
+    local netId = NetworkGetNetworkIdFromEntity(ped)
+    SetNetworkIdCanMigrate(netId, true)
+    TriggerServerEvent('ws_ems:registerPatient', callout.uid, netId)
+
+    if d.wreck then
+        local wh = joaat('blista')
+        lib.requestModel(wh, 8000)
+        local wveh = CreateVehicle(wh, sx + 3.0, sy + 2.0, c.z, (heading + 40.0) % 360.0, true, true)
+        SetModelAsNoLongerNeeded(wh)
+        SetEntityAsMissionEntity(wveh, true, true)
+        SetVehicleTyreBurst(wveh, 0, true, 1000.0)
+        SmashVehicleWindow(wveh, 0)
+        SetVehicleEngineOn(wveh, false, true, true)
+        SetVehicleDoorOpen(wveh, 0, false, false)
+        ctx.wrecks[#ctx.wrecks + 1] = wveh
+    end
+end
+
 local function startScene(callout)
-    local ctx = { uid = callout.uid, stopped = false }
+    local ctx = { uid = callout.uid, stopped = false, patients = {}, wrecks = {} }
     activeScene = ctx
 
     CreateThread(function()
@@ -80,42 +116,29 @@ local function startScene(callout)
         if ctx.stopped then return end
 
         local d = WSEms.Emergencies[callout.id]
-        local c = callout.coords
-        local hash = joaat(d.peds[math.random(#d.peds)])
-        lib.requestModel(hash, 10000)
-        local ped = CreatePed(4, hash, c.x, c.y, c.z, c.w or 0.0, true, true)
-        SetModelAsNoLongerNeeded(hash)
-        SetEntityAsMissionEntity(ped, true, true)
-        SetEntityHealth(ped, 150)
-        forceDownAnim(ped)
-        ctx.patient = ped
 
-        local netId = NetworkGetNetworkIdFromEntity(ped)
-        SetNetworkIdCanMigrate(netId, true)
-        TriggerServerEvent('ws_ems:registerPatient', callout.uid, netId)
+        -- Anzahl Verletzter: Standard 1; Verkehrsunfaelle zufaellig bis maxPatients
+        local count = 1
+        if d.maxPatients and d.maxPatients > 1 then count = math.random(1, d.maxPatients) end
+        TriggerServerEvent('ws_ems:sceneSpawned', callout.uid, count)
 
-        if d.wreck then
-            local wh = joaat('blista')
-            lib.requestModel(wh, 8000)
-            local wveh = CreateVehicle(wh, c.x + 3.0, c.y + 2.0, c.z, (c.w + 40.0) % 360.0, true, true)
-            SetModelAsNoLongerNeeded(wh)
-            SetEntityAsMissionEntity(wveh, true, true)
-            SetVehicleTyreBurst(wveh, 0, true, 1000.0)
-            SmashVehicleWindow(wveh, 0)
-            SetVehicleEngineOn(wveh, false, true, true)
-            SetVehicleDoorOpen(wveh, 0, false, false)
-            ctx.wreck = wveh
+        for i = 1, count do
+            if ctx.stopped then return end
+            spawnAccidentPatient(ctx, callout, d, i)
         end
 
         enotify('scene_ready', 'inform')
 
-        -- Patient in Down-Pose halten, bis stabilisiert (oder verstorben)
+        -- Alle noch nicht stabilisierten Patienten in Down-Pose halten
         while not ctx.stopped do
             Wait(1000)
-            if not DoesEntityExist(ped) or IsEntityDead(ped) then break end
-            if Entity(ped).state['ws:patient_state'] == 'stable' then break end
-            if NetworkHasControlOfEntity(ped) and not IsEntityPlayingAnim(ped, 'dead', 'dead_a', 3) then
-                forceDownAnim(ped)
+            for _, ped in ipairs(ctx.patients) do
+                if DoesEntityExist(ped) and not IsEntityDead(ped)
+                    and Entity(ped).state['ws:patient_state'] ~= 'stable'
+                    and NetworkHasControlOfEntity(ped)
+                    and not IsEntityPlayingAnim(ped, 'dead', 'dead_a', 3) then
+                    forceDownAnim(ped)
+                end
             end
         end
     end)
@@ -155,12 +178,14 @@ RegisterNetEvent('ws_ems:ended', function(uid, reason)
     end
     if activeScene and activeScene.uid == uid then
         activeScene.stopped = true
-        -- Bei Abbruch (nicht abgeschlossen) den nicht eingelieferten Patienten entfernen
-        if reason ~= 'completed' and activeScene.patient and DoesEntityExist(activeScene.patient) then
-            DeleteEntity(activeScene.patient)
+        -- Bei Abbruch (nicht abgeschlossen) noch nicht eingelieferte Patienten entfernen
+        if reason ~= 'completed' then
+            for _, ped in ipairs(activeScene.patients or {}) do
+                if DoesEntityExist(ped) then DeleteEntity(ped) end
+            end
         end
-        if activeScene.wreck and DoesEntityExist(activeScene.wreck) then
-            DeleteEntity(activeScene.wreck)
+        for _, wveh in ipairs(activeScene.wrecks or {}) do
+            if DoesEntityExist(wveh) then DeleteEntity(wveh) end
         end
         activeScene = nil
     end
@@ -169,7 +194,11 @@ end)
 AddEventHandler('onResourceStop', function(res)
     if res ~= cache.resource then return end
     if activeScene then
-        if activeScene.patient and DoesEntityExist(activeScene.patient) then DeleteEntity(activeScene.patient) end
-        if activeScene.wreck and DoesEntityExist(activeScene.wreck) then DeleteEntity(activeScene.wreck) end
+        for _, ped in ipairs(activeScene.patients or {}) do
+            if DoesEntityExist(ped) then DeleteEntity(ped) end
+        end
+        for _, wveh in ipairs(activeScene.wrecks or {}) do
+            if DoesEntityExist(wveh) then DeleteEntity(wveh) end
+        end
     end
 end)

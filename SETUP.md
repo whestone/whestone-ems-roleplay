@@ -70,9 +70,16 @@ Tabelle `players` (Schema: `sql/schema.sql`, Migrationen inkl.
 - **Ränge EMS**: Praktikant → Rettungssanitäter → Notfallsanitäter →
   Senior Paramedic → Notarzt → Ärztlicher Leiter → Klinikdirektor (gleiche XP).
 - **Skills** (max. Stufe 3, Verteilung im Tablet):
-  - LSPD: 🔫 Waffen (SMG/Pumpgun/Marksman) · 🚓 Fahrzeuge (Tuning) · 🏃 Ausdauer
+  - LSPD: 🔫 Waffen (SMG/Pumpgun/Marksman) · 🚓 Fahrzeuge (Tuning; Stufe 3
+    zusätzlich schusssichere Reifen) · 🏃 Ausdauer · 🚔 Unterstützung
+    (schaltet die F7-Verstärkung frei und stuft sie auf: 1 Stanier + Pistolen,
+    2 Interceptor + MPs, 3 Riot + NOOSE mit Sturmgewehren; ohne Skill keine
+    Verstärkung). Beamten-Anzahl je Stufe konfigurierbar (Standard 2:
+    `WSPolice.Backup.Tiers[n].officers`). Im Tablet → **Leitstelle** wählt jeder
+    Beamte, welche freigeschaltete Stufe F7 ruft (Standard: höchste).
   - EMS: 🩺 Medizin (15 %/Stufe schnellere Behandlung, ab St. 2 ein
-    Extra-Reanimationsversuch) · 🚑 Fahrzeuge · 🏃 Ausdauer
+    Extra-Reanimationsversuch) · 🚑 Fahrzeuge (Tuning; Stufe 3 schusssichere
+    Reifen) · 🏃 Ausdauer
 - **PvE-Regeln** (client): kein Wanted-Level (komplett unterdrückt), keine
   KI-Polizei, Gangs neutral, Friendly Fire aus, Waffen fallen nie zu Boden,
   alle Türen des Türsystems entriegelt (`WSConfig.UnlockAllDoors`).
@@ -156,16 +163,23 @@ Tabelle `players` (Schema: `sql/schema.sql`, Migrationen inkl.
   `overdose`, `fall`, `traffic`, `allergic`, `workplace`, `drowning`
   (Daten: `ws_ems/shared/emergencies.lua`).
 - Roter Punkt-Blip + Route wie bei LSPD-Einsätzen.
+- **Verkehrsunfälle** spawnen zufällig **1–3 Verletzte** (je mit Unfallwrack,
+  `maxPatients` im Notfalltyp). Der Einsatz gilt erst als abgeschlossen, wenn
+  **alle** Patienten versorgt und abtransportiert sind.
 
 ### Behandlungs-Loop
 1. **Untersuchen** → Diagnose mit Vitalwerten (Puls/Atmung) → +10 XP.
-2. Je nach Zustand: **Reanimieren** (Defi-Minispiel, Schwierigkeit
-   `WSEms.DefiChecks`; 3 Fehlversuche = Patient stirbt, Einsatz verloren;
-   Medizin-Skill 2 = 4 Versuche) · **Stabilisieren** · **Wunde versorgen**
-   → +40 XP.
-3. **Stützen** (X = loslassen) → **in RTW laden** (übers Fahrzeug!) →
-   roter Marker an der Notaufnahme (nur mit Patient sichtbar) →
-   **Einliefern** direkt aus dem Fahrzeug → +60 XP + Einsatz-XP.
+2. Je nach Zustand: **Reanimieren** (Defi-Minispiel `WSEms.Defi`: 3 Timing-
+   Treffer in Folge nötig, jede Runde schneller; 3 Fehlversuche = Patient
+   stirbt) · **Stabilisieren** · **Wunde versorgen** → +40 XP.
+3. Abtransport – zwei Wege:
+   - **Selbst:** Stützen (X = loslassen) → in RTW laden (übers Fahrzeug!) →
+     roter Marker an der Notaufnahme/Helipad → **Einliefern** → +60 XP.
+   - **NPC-RTW rufen** (ox_target am stabilen Patienten, „RTW zum Abtransport
+     rufen"): ein Rettungswagen fährt an, lädt den Patienten **und alle
+     stabilen Patienten in der Nähe** ein und transportiert sie ab → +40 XP
+     je Patient (analog zum Gefangenentransporter der Polizei).
+   - Nach Versorgung **aller** Patienten zusätzlich der Einsatz-XP-Bonus.
 
 ### Spieler-Wiederbelebung (Downed-System)
 Statt sofort zu sterben, geht ein Spieler **zu Boden** und blutet aus —
@@ -240,6 +254,24 @@ Fraktionsübergreifende Downtime-Inhalte ohne Progressionsbezug:
 
 ---
 
+## 6c. Fahrzeug-HUD (`ws_hud`)
+
+Tacho-Overlay für alle Fahrzeuge (fraktionsübergreifend), rechts unten:
+
+- **Tacho**: Geschwindigkeit in km/h als Rundinstrument (grün → gelb → rot),
+  Skala über `WSHud.MaxSpeedKmh`.
+- **Motorstatus**: grüne/rote Anzeige; **Taste M** schaltet den Motor an/aus
+  (nur als Fahrer). Bei leerem Tank springt er nicht an.
+- **Blaulichtstatus**: eigene Anzeige, aktiv wenn `IsVehicleSirenOn` – nur bei
+  Einsatzfahrzeugen (Klasse 18) sichtbar; blinkt bei aktivem Blaulicht.
+- **Tanksystem** (optional, `WSHud.Fuel.enabled`): Füllstandsbalken; Verbrauch
+  skaliert mit der Drehzahl, bei leerem Tank geht der Motor aus. Betankt wird an
+  **jeder Zapfsäule** der Map (ox_target auf die Weltobjekte, keine Koordinaten
+  nötig) – Fahrzeug in die Nähe stellen, Zapfsäule anvisieren → „Fahrzeug
+  betanken". Sprit ist nicht persistent (frisch gespawnt = voll).
+
+---
+
 ## 7. Tasten & Befehle
 
 | Taste | Funktion |
@@ -252,6 +284,7 @@ Fraktionsübergreifende Downtime-Inhalte ohne Progressionsbezug:
 | **U** | Polizei: Anhaltezeichen |
 | **L / K** | Blaulicht / Sirene |
 | **X** | Eskorte/Patient loslassen |
+| **M** | Fahrzeug: Motor an/aus |
 | **F3** | Emote-Menü |
 | **1 / 2** | Fraktionswahl im Auswahlbildschirm |
 

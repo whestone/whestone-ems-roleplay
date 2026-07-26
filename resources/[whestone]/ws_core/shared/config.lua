@@ -9,7 +9,7 @@ WSConfig.Jobs = {
         short = 'LSPD',
         blipColor = 29,
         -- Skill-Zweige dieses Jobs (Progression ist je Job getrennt)
-        skills = { 'weapons', 'vehicles', 'stamina' },
+        skills = { 'weapons', 'vehicles', 'stamina', 'support' },
         -- Vordereingang Mission Row PD
         spawn = vector4(428.23, -984.28, 30.71, 176.0),
         -- Befoerderung erfolgt automatisch beim Erreichen der XP-Schwelle

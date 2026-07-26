@@ -63,7 +63,8 @@ local function createEmergency(id)
     local em = {
         uid = nextUid, id = id,
         coords = data.locations[math.random(#data.locations)],
-        state = 'offered', medic = nil, patientNet = nil,
+        state = 'offered', medic = nil,
+        patients = {}, expected = nil, delivered = 0, -- mehrere Patienten moeglich
     }
     Emergencies[em.uid] = em
 
@@ -117,26 +118,47 @@ RegisterNetEvent('ws_ems:accept', function(uid)
     end
 end)
 
--- Client meldet den gespawnten Patienten
+-- Client meldet die Gesamtzahl der Patienten der Szene (fuer den Abschluss)
+RegisterNetEvent('ws_ems:sceneSpawned', function(uid, count)
+    local src = source
+    local em = Emergencies[uid]
+    if not em or em.medic ~= src then return end
+    em.expected = math.max(1, tonumber(count) or 1)
+end)
+
+-- Client meldet einen gespawnten Patienten
 RegisterNetEvent('ws_ems:registerPatient', function(uid, netId)
     local src = source
     local em = Emergencies[uid]
     if not em or em.medic ~= src or em.id == PLAYER_RESCUE_ID then return end
-    em.patientNet = netId
+    em.patients[netId] = true
     local data = emData(em)
     exports.ws_ems:RegisterPatient(netId, data.patientState)
 end)
 
--- Patient eingeliefert (Event kommt aus main.lua deliverPatient)
+-- Einsatz abschliessen (bonus = Abschluss-XP des Notfalltyps zusaetzlich)
+local function completeEmergency(em, src, bonus)
+    local data = emData(em)
+    if bonus then exports.ws_core:AddXP(src or em.medic, data.xp, data.label) end
+    exports.ws_core:AddStat(em.medic, 'emergencies', 1)
+    if em.medic then TriggerClientEvent('ws_ems:ended', em.medic, em.uid, 'completed') end
+    notify(em.medic, locale('emergency_done', data.label), 'success')
+    Emergencies[em.uid] = nil
+end
+
+-- Patient eingeliefert (Event aus main.lua deliverPatient bzw. dem NPC-RTW).
+-- Erst wenn ALLE Patienten der Szene versorgt sind, ist der Einsatz fertig.
 AddEventHandler('ws_ems:patientDelivered', function(netId, src)
-    for uid, em in pairs(Emergencies) do
-        if em.patientNet == netId then
-            local data = emData(em)
-            exports.ws_core:AddXP(src, data.xp, data.label)
-            exports.ws_core:AddStat(src, 'emergencies', 1)
-            if em.medic then TriggerClientEvent('ws_ems:ended', em.medic, uid, 'completed') end
-            notify(src, locale('emergency_done', data.label), 'success')
-            Emergencies[uid] = nil
+    for _, em in pairs(Emergencies) do
+        if em.patients and em.patients[netId] then
+            em.patients[netId] = nil
+            em.delivered = (em.delivered or 0) + 1
+            if em.expected and em.delivered >= em.expected then
+                completeEmergency(em, src, true)
+            else
+                local remaining = (em.expected or (em.delivered + 1)) - em.delivered
+                notify(src, locale('patient_delivered_more', math.max(1, remaining)), 'inform')
+            end
             return
         end
     end
@@ -208,13 +230,24 @@ AddEventHandler('ws_core:downedFinished', function(targetSrc, revived)
     end
 end)
 
--- Patient bei der Reanimation verloren: Einsatz endet ohne Belohnung
+-- Patient bei der Reanimation verloren. Bei mehreren Patienten zaehlt nur
+-- dieser als verloren; die uebrigen koennen den Einsatz noch abschliessen.
 RegisterNetEvent('ws_ems:patientLost', function(netId)
     local src = source
     for _, em in pairs(Emergencies) do
-        if em.patientNet == netId and em.medic == src then
-            notify(src, locale('emergency_lost'), 'error')
-            cancel(em, 'lost')
+        if em.patients and em.patients[netId] and em.medic == src then
+            em.patients[netId] = nil
+            em.expected = (em.expected or 1) - 1
+            if em.expected <= (em.delivered or 0) then
+                if (em.delivered or 0) > 0 then
+                    completeEmergency(em, src, false) -- ohne Bonus (Patient verloren)
+                else
+                    notify(src, locale('emergency_lost'), 'error')
+                    cancel(em, 'lost')
+                end
+            else
+                notify(src, locale('patient_lost_one'), 'error')
+            end
             return
         end
     end

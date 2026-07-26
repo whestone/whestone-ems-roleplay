@@ -21,6 +21,12 @@ CreateThread(function()
         SetRelationshipBetweenGroups(5, BACKUP_GROUP, g) -- Hass
         SetRelationshipBetweenGroups(5, g, BACKUP_GROUP)
     end
+    -- Ergebene/gefesselte Verdaechtige (WS_PRISONER) NICHT bekaempfen -
+    -- Respekt statt Hass, sonst schiesst die Verstaerkung sie am Boden nieder
+    AddRelationshipGroup('WS_PRISONER')
+    local prisoner = joaat('WS_PRISONER')
+    SetRelationshipBetweenGroups(1, BACKUP_GROUP, prisoner)
+    SetRelationshipBetweenGroups(1, prisoner, BACKUP_GROUP)
 end)
 
 local function notifyBackup(key, ntype)
@@ -54,6 +60,50 @@ local function nearestHostileSuspect(coords)
     return best
 end
 
+-- ---------------------------------------------------------------------------
+-- Stufen-Auswahl (Leitstelle im Tablet)
+-- ---------------------------------------------------------------------------
+
+local function unlockedLevel()
+    return math.min(3, LocalPlayer.state['ws:skill_support'] or 0)
+end
+
+-- Tatsaechlich gerufene Stufe: die in der Leitstelle gewaehlte, sofern
+-- freigeschaltet - sonst die hoechste freigeschaltete. 0 = nicht freigeschaltet.
+local function effectiveTier()
+    local unlocked = unlockedLevel()
+    if unlocked < 1 then return 0 end
+    local sel = LocalPlayer.state['ws:backupTier']
+    if sel and sel >= 1 and sel <= unlocked then return sel end
+    return unlocked
+end
+
+-- Vom Tablet genutzt: aktuelle Auswahl + alle Stufen mit Freischalt-Status
+exports('GetBackupInfo', function()
+    local unlocked = unlockedLevel()
+    local tiers = {}
+    for i = 1, 3 do
+        local t = WSPolice.Backup.Tiers[i]
+        tiers[i] = {
+            tier = i,
+            label = t.label or ('Stufe ' .. i),
+            officers = t.officers or 2,
+            unlocked = i <= unlocked,
+        }
+    end
+    return { level = unlocked, selected = effectiveTier(), tiers = tiers }
+end)
+
+-- Vom Tablet gesetzt: gewaehlte Stufe (nur freigeschaltete erlaubt).
+-- Sofort lokal wirksam + serverseitig persistent gespeichert.
+exports('SetBackupTier', function(tier)
+    tier = tonumber(tier)
+    if not tier or tier < 1 or tier > unlockedLevel() then return false end
+    LocalPlayer.state:set('ws:backupTier', tier, true)
+    TriggerServerEvent('ws_police:saveBackupTier', tier)
+    return true
+end)
+
 local function requestBackup()
     if LocalPlayer.state['ws:job'] ~= 'police' or LocalPlayer.state['ws:duty'] ~= true then return end
 
@@ -63,6 +113,12 @@ local function requestBackup()
         dismiss = true
         return notifyBackup('backup_dismissed', 'inform')
     end
+    -- Stufe aus Skill + Leitstellen-Auswahl (ohne Skill keine Verstaerkung)
+    local level = effectiveTier()
+    if level < 1 then
+        return notifyBackup('backup_no_skill', 'error')
+    end
+    local tier = WSPolice.Backup.Tiers[level]
     if now - lastRequest < WSPolice.Backup.cooldown * 1000 then
         return notifyBackup('backup_cooldown', 'error')
     end
@@ -90,8 +146,8 @@ local function requestBackup()
         return
     end
 
-    local vehHash = joaat(WSPolice.Backup.vehicle)
-    local pedHash = joaat(WSPolice.Backup.ped)
+    local vehHash = joaat(tier.vehicle)
+    local pedHash = joaat(tier.ped)
     -- lib.requestModel wirft bei Timeout einen Fehler -> abfangen, sonst
     -- stirbt der Thread und `active` bleibt fuer immer haengen
     local okModels = pcall(function()
@@ -115,7 +171,10 @@ local function requestBackup()
     spawnedEntities[veh] = true
 
     local cops = {}
-    for i = 1, WSPolice.Backup.officers do
+    -- Anzahl auf die Sitzplaetze des Fahrzeugs begrenzen, sonst spawnt ein
+    -- Beamter ohne gueltigen Sitz irgendwo im Nirgendwo
+    local officerCount = math.min(tier.officers or 2, GetVehicleModelNumberOfSeats(vehHash))
+    for i = 1, officerCount do
         local seat = (i == 1) and -1 or (i - 2)
         local cop = CreatePed(4, pedHash, spawnPos.x, spawnPos.y, spawnPos.z, spawnHeading, true, true)
         SetEntityAsMissionEntity(cop, true, true)
@@ -123,10 +182,10 @@ local function requestBackup()
         SetPedIntoVehicle(cop, veh, seat)
         SetPedAsCop(cop, false) -- kein GTA-Cop-Verhalten (kein Angriff bei Sternen)
         SetPedRelationshipGroupHash(cop, BACKUP_GROUP)
-        SetPedArmour(cop, 100)
-        SetPedAccuracy(cop, 60)
+        SetPedArmour(cop, tier.armour)
+        SetPedAccuracy(cop, tier.accuracy)
         SetPedFleeAttributes(cop, 0, false)
-        GiveWeaponToPed(cop, joaat(WSPolice.Backup.weapon), 120, false, true)
+        GiveWeaponToPed(cop, joaat(tier.weapon), 120, false, true)
         SetPedDropsWeaponsWhenDead(cop, false) -- keine Waffe faellt auf den Boden
         SetPedCombatAttributes(cop, 46, true)
         cops[#cops + 1] = cop
@@ -190,8 +249,11 @@ local function requestBackup()
                     if not IsPedInCombat(cop, threat) then
                         TaskCombatPed(cop, threat, 0, 16)
                     end
-                elseif #(GetEntityCoords(cop) - ppos) > 12.0 and not IsPedInAnyVehicle(cop, false) then
-                    TaskGoToEntity(cop, cache.ped, -1, 6.0, 2.0, 1073741824.0, 0)
+                elseif not IsPedInAnyVehicle(cop, false) and #(GetEntityCoords(cop) - ppos) > 4.0 then
+                    -- Keine gueltige Bedrohung mehr: zum Officer zurueck. Das
+                    -- bricht einen evtl. noch laufenden Kampf-Task ab, damit nicht
+                    -- auf einen soeben Ergebenen/Gefesselten weitergeschossen wird.
+                    TaskGoToEntity(cop, cache.ped, -1, 3.0, 2.0, 1073741824.0, 0)
                 end
             end
         end

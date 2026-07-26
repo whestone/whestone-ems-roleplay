@@ -34,7 +34,7 @@ local function getRankForXP(job, xp)
     return grade
 end
 
-local SKILL_BRANCHES = { 'weapons', 'vehicles', 'stamina', 'medic' }
+local SKILL_BRANCHES = { 'weapons', 'vehicles', 'stamina', 'medic', 'support' }
 
 -- Rang- und Skill-Statebags auf den aktiven Job setzen (Zweige, die der Job
 -- nicht hat, stehen auf 0 - so verschwinden fremde Freischaltungen sauber)
@@ -291,6 +291,12 @@ exports('GetStat', function(src, key)
     local p = Players[src]
     return (p and p.stats[key]) or 0
 end)
+-- Direkter Setter (nicht additiv wie AddStat) - auch fuer persistente
+-- Praeferenzen im stats-Blob nutzbar (z.B. gewaehlte Verstaerkungs-Stufe)
+exports('SetStat', function(src, key, value)
+    local p = Players[src]
+    if p then p.stats[key] = value end
+end)
 exports('GetOnDutyPlayers', function(job)
     local result = {}
     for src, p in pairs(Players) do
@@ -395,15 +401,17 @@ end)
 exports('GetSkillInfo', function(src)
     local p = Players[src]
     if not p then return nil end
-    return {
+    local info = {
         points = p.skillpoints,
-        weapons = p.skills.weapons or 0,
-        vehicles = p.skills.vehicles or 0,
-        stamina = p.skills.stamina or 0,
-        medic = p.skills.medic or 0,
         maxLevel = WSConfig.MaxSkillLevel,
         branches = WSConfig.Jobs[p.job].skills,
     }
+    -- Alle Zweige generisch mitgeben (nicht hart codiert), sonst fehlt ein neu
+    -- hinzugefuegter Zweig wie 'support' und laesst sich im Tablet nicht leveln
+    for _, branch in ipairs(SKILL_BRANCHES) do
+        info[branch] = p.skills[branch] or 0
+    end
+    return info
 end)
 exports('UpgradeSkill', function(src, branch)
     local p = Players[src]
@@ -437,16 +445,17 @@ exports('GetOnlinePlayersInfo', function()
             local jd = p.jobdata[jobId] or {}
             local skills = jd.skills or {}
             local rd = jcfg.ranks[jd.rank or 0]
-            careers[jobId] = {
+            local career = {
                 rank = jd.rank or 0,
                 rankLabel = rd and rd.label or '',
                 xp = jd.xp or 0,
                 skillpoints = jd.skillpoints or 0,
-                weapons = skills.weapons or 0,
-                vehicles = skills.vehicles or 0,
-                stamina = skills.stamina or 0,
-                medic = skills.medic or 0,
             }
+            -- Skill-Zweige generisch (sonst fehlt ein neuer Zweig wie 'support')
+            for _, branch in ipairs(SKILL_BRANCHES) do
+                career[branch] = skills[branch] or 0
+            end
+            careers[jobId] = career
         end
 
         list[#list + 1] = {

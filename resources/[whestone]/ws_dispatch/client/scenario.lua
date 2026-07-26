@@ -20,12 +20,18 @@ end
 local SUSPECT_GROUP = joaat('WS_SUSPECT')
 local HOSTILE_GROUP = joaat('WS_HOSTILE')
 local PLAYER_GROUP = joaat('PLAYER')
+-- Neutrale Gruppe fuer Ergebene/Gefesselte: sie greifen niemanden an und
+-- werden von der KI-Verstaerkung (WS_BACKUP) nicht mehr beschossen.
+local PRISONER_GROUP = joaat('WS_PRISONER')
 
 CreateThread(function()
     AddRelationshipGroup('WS_SUSPECT')
     AddRelationshipGroup('WS_HOSTILE')
+    AddRelationshipGroup('WS_PRISONER')
     SetRelationshipBetweenGroups(4, SUSPECT_GROUP, PLAYER_GROUP)
     SetRelationshipBetweenGroups(5, HOSTILE_GROUP, PLAYER_GROUP)
+    SetRelationshipBetweenGroups(1, PRISONER_GROUP, PLAYER_GROUP)
+    SetRelationshipBetweenGroups(1, PLAYER_GROUP, PRISONER_GROUP)
 end)
 
 function EnsureControl(entity)
@@ -147,6 +153,8 @@ local function buildContext(callout)
         if EnsureControl(ped) then
             ClearPedTasksImmediately(ped)
             RemoveAllPedWeapons(ped, true)
+            -- In die neutrale Gruppe: Verstaerkung schiesst nicht mehr auf ihn
+            SetPedRelationshipGroupHash(ped, PRISONER_GROUP)
             SetBlockingOfNonTemporaryEvents(ped, true)
             TaskHandsUp(ped, -1, 0, -1, false)
         end

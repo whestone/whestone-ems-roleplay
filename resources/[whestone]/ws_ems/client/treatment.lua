@@ -166,17 +166,9 @@ local function reanimate(ped)
     if pending[ped] then return end
     pending[ped] = true
 
-    -- Defibrillator-Minispiel: Skill-Checks in Folge (nur Taste E,
-    -- Schwierigkeit in WSEms.DefiChecks konfigurierbar)
+    -- Defibrillator-Minispiel (Timing per E, unabhaengig von lib.skillCheck)
     enotify('defi_charge', 'inform')
-    local success = WSSkillCheck(WSEms.DefiChecks)
-    if success == nil then
-        -- Minispiel liess sich nicht starten: KEIN Fehlversuch anrechnen,
-        -- sonst stirbt der Patient wegen eines technischen Problems
-        enotify('defi_unavailable', 'error')
-        SetTimeout(1500, function() pending[ped] = nil end)
-        return
-    end
+    local success = WSDefiMinigame()
     if success then
         defiFails[ped] = nil
         finishTreatment(ped)
