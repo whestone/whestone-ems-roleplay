@@ -24,10 +24,10 @@
     }
     h1 { color: #eef3fa; font-size: 34px; font-weight: 700; margin-bottom: 42px; letter-spacing: 1px; }
 
-    .cards { display: flex; gap: 34px; }
+    .cards { display: flex; gap: 26px; }
 
     .card {
-        width: 350px; border-radius: 18px; padding: 34px 30px 26px;
+        width: 300px; border-radius: 18px; padding: 30px 26px 24px;
         background: linear-gradient(180deg, #121a28 0%, #0b111c 100%);
         border: 1px solid #223047; cursor: pointer; text-align: center;
         transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
@@ -38,10 +38,12 @@
     }
     .card.lspd::before { background: linear-gradient(90deg, #2d6fe0, #6ea8ff); }
     .card.ems::before  { background: linear-gradient(90deg, #d23c3c, #ff8a7a); }
+    .card.fire::before { background: linear-gradient(90deg, #e8791e, #ffb768); }
 
     .card:hover { transform: translateY(-8px) scale(1.02); }
     .card.lspd:hover { border-color: #2d6fe0; box-shadow: 0 18px 60px rgba(45,111,224,.35); }
     .card.ems:hover  { border-color: #d23c3c; box-shadow: 0 18px 60px rgba(210,60,60,.35); }
+    .card.fire:hover { border-color: #e8791e; box-shadow: 0 18px 60px rgba(232,121,30,.35); }
 
     .emblem { font-size: 74px; margin-bottom: 16px; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)); }
     /* Feste Zwei-Zeilen-Hoehe: LSPD bricht um, EMS nicht - so bleiben die
@@ -51,6 +53,7 @@
     .card .sub { font-size: 12.5px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
     .card.lspd .sub { color: #6ea8ff; }
     .card.ems .sub  { color: #ff8a7a; }
+    .card.fire .sub { color: #ffb768; }
 
     .features { list-style: none; margin-bottom: 22px; }
     .features li {
@@ -71,6 +74,7 @@
     }
     .card.lspd .cta { background: linear-gradient(90deg, #1f5dc4, #2d6fe0); }
     .card.ems .cta  { background: linear-gradient(90deg, #b83232, #d23c3c); }
+    .card.fire .cta { background: linear-gradient(90deg, #c96410, #e8791e); }
 
     .hint { color: #4d5a70; font-size: 12.5px; margin-top: 34px; }
     .hint kbd {
@@ -102,8 +106,10 @@
     .vcard.lspd::before { background: linear-gradient(90deg, #2d6fe0, #6ea8ff); }
     .vcard.ems::before  { background: linear-gradient(90deg, #d23c3c, #ff8a7a); }
     .vcard:not(.off):hover { transform: translateY(-5px); }
+    .vcard.fire::before { background: linear-gradient(90deg, #e8791e, #ffb768); }
     .vcard.lspd:not(.off):hover { border-color: #2d6fe0; box-shadow: 0 14px 44px rgba(45,111,224,.32); }
     .vcard.ems:not(.off):hover  { border-color: #d23c3c; box-shadow: 0 14px 44px rgba(210,60,60,.32); }
+    .vcard.fire:not(.off):hover { border-color: #e8791e; box-shadow: 0 14px 44px rgba(232,121,30,.32); }
     .vcard.off { cursor: not-allowed; opacity: .45; filter: grayscale(.7); }
 
     .vimg { width: 100%; height: 108px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
@@ -217,8 +223,20 @@
             <div class="career" id="career-ambulance">–</div>
             <div class="cta">Dienst antreten</div>
         </div>
+        <div class="card fire" data-job="fire">
+            <div class="emblem">🚒</div>
+            <h2>Los Santos Fire Department</h2>
+            <div class="sub">Feuerwehr</div>
+            <ul class="features">
+                <li>Gebäude-, Fahrzeug- &amp; Flächenbrände</li>
+                <li>Feuerlöscher &amp; Wasserwerfer</li>
+                <li>Löschfahrzeug &amp; Feuerwehr-Skills</li>
+            </ul>
+            <div class="career" id="career-fire">–</div>
+            <div class="cta">Dienst antreten</div>
+        </div>
     </div>
-    <div class="hint">Schnellwahl: <kbd>1</kbd> Polizei &nbsp;·&nbsp; <kbd>2</kbd> Rettungsdienst</div>
+    <div class="hint">Schnellwahl: <kbd>1</kbd> Polizei &nbsp;·&nbsp; <kbd>2</kbd> Rettungsdienst &nbsp;·&nbsp; <kbd>3</kbd> Feuerwehr</div>
 </div>
 
 <script>
@@ -241,7 +259,7 @@ window.addEventListener('message', (e) => {
     const msg = e.data;
     if (msg.action === 'openJobSelect') {
         const c = msg.careers || {};
-        for (const job of ['police', 'ambulance']) {
+        for (const job of ['police', 'ambulance', 'fire']) {
             const el = document.getElementById('career-' + job);
             const data = c[job];
             el.innerHTML = data
@@ -262,6 +280,7 @@ document.querySelectorAll('.card').forEach(card => {
 document.addEventListener('keydown', (e) => {
     if (e.key === '1') choose('police');
     if (e.key === '2') choose('ambulance');
+    if (e.key === '3') choose('fire');
 });
 </script>
 

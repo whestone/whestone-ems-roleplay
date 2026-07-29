@@ -156,11 +156,18 @@ end)
 -- NPC-Wagen den Transport uebernimmt; etwas weniger XP als die Eigenlieferung)
 RegisterNetEvent('ws_ems:transportPatient', function(netId)
     local src = source
-    if not isEms(src) or not exports.ws_core:IsOnDuty(src) then return end
+    if not isEms(src) or not exports.ws_core:IsOnDuty(src) then
+        print(('[ws_ems] transportPatient: %s kein EMS/nicht im Dienst'):format(src)) return
+    end
     local ent = NetworkGetEntityFromNetworkId(netId)
-    if not ent or ent == 0 or not DoesEntityExist(ent) then return end
+    if not ent or ent == 0 or not DoesEntityExist(ent) then
+        print(('[ws_ems] transportPatient: netId %s -> kein Server-Entity'):format(tostring(netId))) return
+    end
     local st = Entity(ent).state
-    if not st['ws:patient'] or st['ws:patient_state'] ~= 'stable' then return end
+    if not st['ws:patient'] or st['ws:patient_state'] ~= 'stable' then
+        print(('[ws_ems] transportPatient: netId %s patient=%s state=%s (nicht stabil)'):format(
+            tostring(netId), tostring(st['ws:patient']), tostring(st['ws:patient_state']))) return
+    end
 
     exports.ws_core:AddXP(src, WSEms.XP.transport or WSEms.XP.deliver, locale('xp_transport'))
     exports.ws_core:AddStat(src, 'patients', 1)

@@ -64,7 +64,7 @@ local function createEmergency(id)
         uid = nextUid, id = id,
         coords = data.locations[math.random(#data.locations)],
         state = 'offered', medic = nil,
-        patients = {}, expected = nil, delivered = 0, -- mehrere Patienten moeglich
+        patients = {}, pending = 0, spawnDone = false, -- mehrere Patienten moeglich
     }
     Emergencies[em.uid] = em
 
@@ -118,24 +118,6 @@ RegisterNetEvent('ws_ems:accept', function(uid)
     end
 end)
 
--- Client meldet die Gesamtzahl der Patienten der Szene (fuer den Abschluss)
-RegisterNetEvent('ws_ems:sceneSpawned', function(uid, count)
-    local src = source
-    local em = Emergencies[uid]
-    if not em or em.medic ~= src then return end
-    em.expected = math.max(1, tonumber(count) or 1)
-end)
-
--- Client meldet einen gespawnten Patienten
-RegisterNetEvent('ws_ems:registerPatient', function(uid, netId)
-    local src = source
-    local em = Emergencies[uid]
-    if not em or em.medic ~= src or em.id == PLAYER_RESCUE_ID then return end
-    em.patients[netId] = true
-    local data = emData(em)
-    exports.ws_ems:RegisterPatient(netId, data.patientState)
-end)
-
 -- Einsatz abschliessen (bonus = Abschluss-XP des Notfalltyps zusaetzlich)
 local function completeEmergency(em, src, bonus)
     local data = emData(em)
@@ -146,18 +128,47 @@ local function completeEmergency(em, src, bonus)
     Emergencies[em.uid] = nil
 end
 
+-- Abschluss, sobald ALLE Patienten gespawnt (spawnDone) UND versorgt (pending 0).
+-- Zaehlerbasiert statt Soll-Ist-Vergleich -> kann nicht mehr ewig haengen.
+local function maybeComplete(em, src)
+    if em.spawnDone and (em.pending or 0) <= 0 then
+        completeEmergency(em, src, true)
+        return true
+    end
+    return false
+end
+
+-- Client hat alle Patienten der Szene gespawnt/registriert
+RegisterNetEvent('ws_ems:sceneSpawned', function(uid)
+    local src = source
+    local em = Emergencies[uid]
+    if not em or em.medic ~= src then return end
+    em.spawnDone = true
+    maybeComplete(em, src)
+end)
+
+-- Client meldet einen gespawnten Patienten
+RegisterNetEvent('ws_ems:registerPatient', function(uid, netId)
+    local src = source
+    local em = Emergencies[uid]
+    if not em or em.medic ~= src or em.id == PLAYER_RESCUE_ID then return end
+    if not em.patients[netId] then
+        em.patients[netId] = true
+        em.pending = (em.pending or 0) + 1
+    end
+    local data = emData(em)
+    exports.ws_ems:RegisterPatient(netId, data.patientState)
+end)
+
 -- Patient eingeliefert (Event aus main.lua deliverPatient bzw. dem NPC-RTW).
 -- Erst wenn ALLE Patienten der Szene versorgt sind, ist der Einsatz fertig.
 AddEventHandler('ws_ems:patientDelivered', function(netId, src)
     for _, em in pairs(Emergencies) do
         if em.patients and em.patients[netId] then
             em.patients[netId] = nil
-            em.delivered = (em.delivered or 0) + 1
-            if em.expected and em.delivered >= em.expected then
-                completeEmergency(em, src, true)
-            else
-                local remaining = (em.expected or (em.delivered + 1)) - em.delivered
-                notify(src, locale('patient_delivered_more', math.max(1, remaining)), 'inform')
+            em.pending = math.max(0, (em.pending or 1) - 1)
+            if not maybeComplete(em, src) then
+                notify(src, locale('patient_delivered_more', math.max(1, em.pending)), 'inform')
             end
             return
         end
@@ -237,14 +248,12 @@ RegisterNetEvent('ws_ems:patientLost', function(netId)
     for _, em in pairs(Emergencies) do
         if em.patients and em.patients[netId] and em.medic == src then
             em.patients[netId] = nil
-            em.expected = (em.expected or 1) - 1
-            if em.expected <= (em.delivered or 0) then
-                if (em.delivered or 0) > 0 then
-                    completeEmergency(em, src, false) -- ohne Bonus (Patient verloren)
-                else
-                    notify(src, locale('emergency_lost'), 'error')
-                    cancel(em, 'lost')
-                end
+            em.pending = math.max(0, (em.pending or 1) - 1)
+            -- Verlorener Patient zaehlt nicht als versorgt; sind danach keine
+            -- offenen Patienten mehr da, endet der Einsatz als verloren.
+            if em.spawnDone and em.pending <= 0 then
+                notify(src, locale('emergency_lost'), 'error')
+                cancel(em, 'lost')
             else
                 notify(src, locale('patient_lost_one'), 'error')
             end

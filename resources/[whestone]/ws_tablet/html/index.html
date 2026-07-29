@@ -345,6 +345,10 @@ const branchDefs = {
         icon: '🩺', label: 'Medizin',
         levels: ['15% schnellere Behandlungen', '30% schneller + 1 Extra-Reanimationsversuch', '45% schnellere Behandlungen'],
     },
+    firefighting: {
+        icon: '🚒', label: 'Brandbekämpfung',
+        levels: ['20% schnelleres Löschen', '40% schnelleres Löschen', '60% schnelleres Löschen'],
+    },
 };
 
 function renderSkills(skills, progress) {
@@ -411,8 +415,9 @@ function renderAdmin(players, rankLists) {
     const jobMeta = {
         police:    { name: 'LSPD', icon: '🛡️', branches: ['weapons', 'vehicles', 'stamina', 'support'] },
         ambulance: { name: 'EMS',  icon: '🚑', branches: ['medic', 'vehicles', 'stamina'] },
+        fire:      { name: 'LSFD', icon: '🚒', branches: ['firefighting', 'vehicles', 'stamina'] },
     };
-    const branchLabel = { weapons: '🔫 Waffen', vehicles: '🚓 Fahrzeuge', stamina: '🏃 Ausdauer', medic: '🩺 Medizin', support: '🚔 Unterstützung' };
+    const branchLabel = { weapons: '🔫 Waffen', vehicles: '🚓 Fahrzeuge', stamina: '🏃 Ausdauer', medic: '🩺 Medizin', support: '🚔 Unterstützung', firefighting: '🚒 Brandbekämpfung' };
     const levelOptions = (selected) => skillLevels.map(l =>
         `<option value="${l}" ${l === selected ? 'selected' : ''}>${l}</option>`).join('');
 
@@ -453,14 +458,17 @@ function render(data) {
     if (!data) return;
     myCalloutUid = data.myCalloutUid ?? null;
 
-    // Branding je Fraktion (LSPD / EMS)
-    const ems = data.job === 'ambulance';
-    document.querySelector('.brand').textContent = ems ? 'EMS NET' : 'LSPD NET';
-    document.querySelector('.badge').textContent = ems ? '🚑' : '🛡️';
-    document.querySelector('header h1').textContent = ems ? 'EMS Terminal' : 'LSPD Terminal';
-    document.querySelector('header p').textContent = ems
-        ? 'Leitstellen- und Personalübersicht · Pillbox Medical'
-        : 'Leitstellen- und Personalübersicht · Mission Row PD';
+    // Branding je Fraktion (LSPD / EMS / LSFD)
+    const brandInfo = {
+        ambulance: { brand: 'EMS NET',  badge: '🚑', title: 'EMS Terminal',  sub: 'Leitstellen- und Personalübersicht · Pillbox Medical' },
+        fire:      { brand: 'LSFD NET', badge: '🚒', title: 'LSFD Terminal', sub: 'Leitstellen- und Personalübersicht · Feuerwache' },
+        police:    { brand: 'LSPD NET', badge: '🛡️', title: 'LSPD Terminal', sub: 'Leitstellen- und Personalübersicht · Mission Row PD' },
+    };
+    const bi = brandInfo[data.job] || brandInfo.police;
+    document.querySelector('.brand').textContent = bi.brand;
+    document.querySelector('.badge').textContent = bi.badge;
+    document.querySelector('header h1').textContent = bi.title;
+    document.querySelector('header p').textContent = bi.sub;
     renderCallouts(data.callouts);
     renderOfficers(data.players);
     renderSkills(data.skills, data.progress);

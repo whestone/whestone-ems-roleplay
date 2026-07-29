@@ -7,58 +7,77 @@
     html, body { width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
 
     #hud {
-        /* bottom hoch genug, dass GTA-Straßennamen und das FiveM-Logo
-           (beide unten rechts) den Tacho nicht überdecken */
-        position: absolute; right: 26px; bottom: 135px;
-        width: 200px; padding: 14px 16px 12px;
-        background: linear-gradient(180deg, rgba(16,22,32,.86) 0%, rgba(8,11,17,.92) 100%);
-        border: 1px solid rgba(70,90,120,.35); border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,.5);
+        /* unten links, oberhalb der Minimap; ohne Panel-Hintergrund.
+           Position in vh/vw -> sitzt auf jeder Aufloesung ueber der Minimap. */
+        position: absolute; left: 1.6vw; bottom: 23vh;
+        width: 200px; padding: 4px 6px;
+        background: none; border: none; box-shadow: none;
+        filter: drop-shadow(0 2px 7px rgba(0,0,0,.75));
         display: none;
     }
     #hud.on { display: block; }
+    /* Farbiger Schlagschatten - im Blaulicht mit der RECHTEN Leuchte gesynct
+       (gleiche Phase wie blRight: erst rot, dann blau) */
+    #hud.blaulicht { animation: hudGlow .55s linear infinite; }
+    @keyframes hudGlow {
+        0%,49%   { filter: drop-shadow(0 2px 13px rgba(226,52,52,.85)); }
+        50%,100% { filter: drop-shadow(0 2px 13px rgba(47,111,232,.85)); }
+    }
 
     /* --- Rundtacho --- */
     .gauge { position: relative; width: 168px; height: 118px; margin: 0 auto; }
     .gauge svg { width: 100%; height: 100%; transform: rotate(135deg); }
-    .track { fill: none; stroke: rgba(90,110,140,.22); stroke-width: 11; stroke-linecap: round; }
+    .track { fill: none; stroke: rgba(16,22,32,.72); stroke-width: 11; stroke-linecap: round; }
     .fill  { fill: none; stroke: #35c46a; stroke-width: 11; stroke-linecap: round;
              transition: stroke-dasharray .12s linear, stroke .2s ease; }
 
     .readout { position: absolute; inset: 0; display: flex; flex-direction: column;
                align-items: center; justify-content: center; padding-top: 14px; }
-    .speed { color: #eef3fa; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-    .unit  { color: #6f7f96; font-size: 11px; letter-spacing: 3px; margin-top: 2px; }
+    .speed { color: #eef3fa; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+             text-shadow: 0 2px 6px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.9); }
+    .unit  { color: #c7d2e3; font-size: 11px; letter-spacing: 3px; margin-top: 2px;
+             text-shadow: 0 1px 4px rgba(0,0,0,.95); }
 
     /* --- Statuszeile --- */
     .status { display: flex; gap: 8px; margin-top: 8px; }
     .pill {
         flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
         padding: 6px 4px; border-radius: 9px; font-size: 11px; font-weight: 600; letter-spacing: .3px;
-        background: rgba(255,255,255,.04); border: 1px solid rgba(90,110,140,.2);
-        color: #6f7f96; transition: all .18s ease;
+        background: rgba(6,9,14,.85); border: 1px solid rgba(90,110,140,.45);
+        color: #aeb9c9; transition: all .18s ease; text-shadow: 0 1px 3px rgba(0,0,0,.9);
     }
-    .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #566; box-shadow: none; transition: all .18s ease; }
+    .pill .dot, .pill .bl { width: 8px; height: 8px; border-radius: 50%; background: #566; box-shadow: none; transition: all .18s ease; }
 
-    .pill.motor.on  { color: #7fe0a0; border-color: rgba(53,196,106,.4); background: rgba(53,196,106,.1); }
+    .pill.motor.on  { color: #7fe0a0; border-color: rgba(53,196,106,.5); background: rgba(24,58,38,.85); }
     .pill.motor.on  .dot { background: #35c46a; box-shadow: 0 0 8px #35c46a; }
-    .pill.motor.off { color: #e88; border-color: rgba(210,70,70,.4); background: rgba(210,70,70,.1); }
+    .pill.motor.off { color: #f2a3a3; border-color: rgba(210,70,70,.5); background: rgba(64,22,22,.85); }
     .pill.motor.off .dot { background: #d24646; box-shadow: 0 0 8px #d24646; }
 
     .pill.blau { display: none; }
     .pill.blau.show { display: flex; }
-    .pill.blau.on  { color: #7db4ff; border-color: rgba(45,111,224,.5); background: rgba(45,111,224,.14);
-                     animation: blaupulse 1s ease-in-out infinite; }
-    .pill.blau.on  .dot { background: #2d6fe0; box-shadow: 0 0 9px #4d8bff; }
-    @keyframes blaupulse { 0%,100% { border-color: rgba(45,111,224,.5); } 50% { border-color: rgba(120,180,255,.9); } }
+    .pill.blau.on  { color: #dfe6f0; border-color: rgba(120,140,170,.4); background: rgba(18,22,32,.85); }
+    /* Zwei Leuchten links/rechts, gegenphasig rot<->blau -> Lightbar-Effekt */
+    .pill.blau.on .bl.left  { animation: blLeft  .55s linear infinite; }
+    .pill.blau.on .bl.right { animation: blRight .55s linear infinite; }
+    @keyframes blLeft {
+        0%,49%   { background: #2f6fe8; box-shadow: 0 0 10px 2px #4d8bff; }
+        50%,100% { background: #e23434; box-shadow: 0 0 10px 2px #ff5a5a; }
+    }
+    @keyframes blRight {
+        0%,49%   { background: #e23434; box-shadow: 0 0 10px 2px #ff5a5a; }
+        50%,100% { background: #2f6fe8; box-shadow: 0 0 10px 2px #4d8bff; }
+    }
 
     /* --- Tank --- */
     .fuel { display: none; align-items: center; gap: 8px; margin-top: 9px; }
     .fuel.show { display: flex; }
     .fuel .ico { font-size: 13px; }
-    .fuel .bar { flex: 1; height: 7px; border-radius: 6px; background: rgba(90,110,140,.2); overflow: hidden; }
+    .fuel .ico { text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+    .fuel .bar { flex: 1; height: 7px; border-radius: 6px; background: rgba(6,9,14,.85); overflow: hidden;
+                 box-shadow: 0 1px 3px rgba(0,0,0,.6); }
     .fuel .lvl { height: 100%; width: 100%; border-radius: 6px; background: #35c46a; transition: width .3s ease, background .3s ease; }
-    .fuel .pct { color: #9fb0c6; font-size: 11px; font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+    .fuel .pct { color: #cdd6e2; font-size: 11px; font-variant-numeric: tabular-nums; min-width: 30px; text-align: right;
+                 text-shadow: 0 1px 4px rgba(0,0,0,.95); }
     .fuel.low .ico { animation: lowblink 1s steps(1) infinite; }
     .fuel.low .lvl { background: #e0a12d; }
     .fuel.crit .lvl { background: #d24646; }
@@ -80,7 +99,7 @@
 
     <div class="status">
         <div class="pill motor off" id="motor"><span class="dot"></span><span>MOTOR</span></div>
-        <div class="pill blau" id="blau"><span class="dot"></span><span>BLAULICHT</span></div>
+        <div class="pill blau" id="blau"><span class="bl left"></span><span>BLAULICHT</span><span class="bl right"></span></div>
     </div>
 
     <div class="fuel" id="fuel">
@@ -128,6 +147,8 @@ function update(d) {
 
     elBlau.classList.toggle('show', !!d.emergency);
     elBlau.classList.toggle('on', !!d.lights);
+    // farbiger Schlagschatten nur bei aktivem Blaulicht (phasengleich mit rechts)
+    hud.classList.toggle('blaulicht', !!(d.emergency && d.lights));
 
     if (d.fuelShown) {
         elFuel.classList.add('show');

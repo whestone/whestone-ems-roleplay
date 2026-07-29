@@ -22,9 +22,9 @@ end
 
 local function openTablet()
     if isOpen then return end
-    -- Tablet fuer Polizei UND Rettungsdienst (jeweils im Dienst)
+    -- Tablet fuer Polizei, Rettungsdienst UND Feuerwehr (jeweils im Dienst)
     local job = LocalPlayer.state['ws:job']
-    if (job ~= 'police' and job ~= 'ambulance') or LocalPlayer.state['ws:duty'] ~= true then
+    if (job ~= 'police' and job ~= 'ambulance' and job ~= 'fire') or LocalPlayer.state['ws:duty'] ~= true then
         lib.notify({ title = locale('tablet_title'), description = locale('not_on_duty'), type = 'error' })
         return
     end
@@ -56,8 +56,11 @@ RegisterNUICallback('accept', function(body, cb)
         -- Tablet schliessen, damit es direkt losgehen kann;
         -- Zuweisung/Fehler melden sich per Notification
         closeTablet()
-        if LocalPlayer.state['ws:job'] == 'ambulance' then
+        local j = LocalPlayer.state['ws:job']
+        if j == 'ambulance' then
             TriggerServerEvent('ws_ems:accept', body.uid)
+        elseif j == 'fire' then
+            TriggerServerEvent('ws_fire:accept', body.uid)
         else
             TriggerServerEvent('ws_dispatch:accept', body.uid)
         end

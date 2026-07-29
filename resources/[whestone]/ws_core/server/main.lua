@@ -34,7 +34,7 @@ local function getRankForXP(job, xp)
     return grade
 end
 
-local SKILL_BRANCHES = { 'weapons', 'vehicles', 'stamina', 'medic', 'support' }
+local SKILL_BRANCHES = { 'weapons', 'vehicles', 'stamina', 'medic', 'support', 'firefighting' }
 
 -- Rang- und Skill-Statebags auf den aktiven Job setzen (Zweige, die der Job
 -- nicht hat, stehen auf 0 - so verschwinden fremde Freischaltungen sauber)

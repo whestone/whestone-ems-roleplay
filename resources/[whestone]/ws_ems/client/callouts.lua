@@ -120,12 +120,13 @@ local function startScene(callout)
         -- Anzahl Verletzter: Standard 1; Verkehrsunfaelle zufaellig bis maxPatients
         local count = 1
         if d.maxPatients and d.maxPatients > 1 then count = math.random(1, d.maxPatients) end
-        TriggerServerEvent('ws_ems:sceneSpawned', callout.uid, count)
 
         for i = 1, count do
             if ctx.stopped then return end
             spawnAccidentPatient(ctx, callout, d, i)
         end
+        -- erst NACH dem Spawnen melden: jetzt sind alle Patienten registriert
+        TriggerServerEvent('ws_ems:sceneSpawned', callout.uid)
 
         enotify('scene_ready', 'inform')
 

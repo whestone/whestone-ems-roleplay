@@ -1,0 +1,63 @@
+name: whestone
+
+# Whestone EMS – FiveM auf UGREEN NAS (Docker).
+# Zwei Container: MariaDB (Datenbank) + FXServer/txAdmin.
+#
+# ALLE projektbezogenen Daten liegen unter ${DATA_ROOT} (= /volume1/docker/FiveM):
+#   ${DATA_ROOT}/server   -> Git-Clone (Repo-Root = txData-Basis, resources/, server.cfg)
+#   ${DATA_ROOT}/db       -> MariaDB-Datenbankdateien
+#   ${DATA_ROOT}/txData   -> txAdmin-Daten (Admins, Einstellungen)
+#   ${DATA_ROOT}/dumps    -> SQL-Dumps (Import/Backups)
+# Secrets kommen aus .env (nicht im Git).
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: ws_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: whestone_ems
+      MARIADB_USER: whestone
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    volumes:
+      - ${DATA_ROOT}/db:/var/lib/mysql
+    networks: [ws_net]
+    # Kein published Port: die DB ist nur intern (fuer FXServer) erreichbar.
+    # Der einmalige Import laeuft ueber `docker exec` (siehe README).
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  fxserver:
+    build:
+      context: ./fxserver
+      args:
+        FX_URL: ${FX_URL}
+    container_name: ws_fxserver
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "30120:30120/tcp"   # Spiel-Traffic
+      - "30120:30120/udp"   # Spiel-Traffic
+      - "40120:40120/tcp"   # txAdmin-Weboberflaeche
+    volumes:
+      - ${DATA_ROOT}/server:/server            # Repo-Root = txData-Basis (resources/, server.cfg)
+      - ${DATA_ROOT}/txData:/opt/cfx/txData     # txAdmin-Daten (Admins, Einstellungen)
+    working_dir: /opt/cfx
+    command: ["bash", "/opt/cfx/run.sh", "+set", "txAdminPort", "40120"]
+    # proot (Linux-Artifact) braucht in Docker haeufig gelockerte seccomp-Regeln.
+    security_opt:
+      - seccomp:unconfined
+    stop_grace_period: 30s
+    networks: [ws_net]
+
+networks:
+  ws_net:

@@ -15,8 +15,8 @@ Deutsche Texte, US-Setting (Vanilla-Fahrzeuge/-Uniformen).
 | MariaDB (portable) | `E:\MariaDB` – Port 3306, Autostart via Startup-Ordner (VBS) |
 | MariaDB manuell starten | `E:\MariaDB\start_mariadb.bat` |
 | Datenbank | `whestone_ems` |
-| DB-User (App) | `whestone` / `REDACTED` |
-| DB-User (root) | `root` / `REDACTED` |
+| DB-User (App) | `whestone` / `<Passwort – siehe lokale server.cfg>` |
+| DB-User (root) | `root` / `<Passwort – siehe lokale server.cfg>` |
 
 ### server.cfg – wichtige Einträge
 - `sv_licenseKey` steht direkt in der cfg (CFX keymaster).

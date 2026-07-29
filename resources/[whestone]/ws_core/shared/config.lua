@@ -40,6 +40,23 @@ WSConfig.Jobs = {
             [6] = { name = 'director',  label = 'Klinikdirektor',    xp = 25000 },
         },
     },
+    fire = {
+        label = 'Los Santos Fire Department',
+        short = 'LSFD',
+        blipColor = 47, -- orange
+        skills = { 'firefighting', 'vehicles', 'stamina' },
+        -- Fire Station (Davis) - im Spiel feinjustierbar
+        spawn = vector4(1193.6, -1471.6, 34.9, 240.0),
+        ranks = {
+            [0] = { name = 'recruit',     label = 'Anwärter',          xp = 0 },
+            [1] = { name = 'firefighter', label = 'Feuerwehrmann',     xp = 300 },
+            [2] = { name = 'engineer',    label = 'Maschinist',        xp = 1000 },
+            [3] = { name = 'senior',      label = 'Oberfeuerwehrmann', xp = 2500 },
+            [4] = { name = 'captain',     label = 'Brandmeister',      xp = 6000 },
+            [5] = { name = 'batchief',    label = 'Zugführer',         xp = 12000 },
+            [6] = { name = 'chief',       label = 'Branddirektor',     xp = 25000 },
+        },
+    },
 }
 
 -- Fallback-Spawn (falls Job keinen eigenen spawn hat)

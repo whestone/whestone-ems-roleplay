@@ -11,8 +11,8 @@ WSHud.Fuel = {
     enabled = true,
 
     default = 100.0,     -- Fuellung, mit der ein Fahrzeug erstmals erfasst wird
-    consumption = 2.0,   -- Prozent pro Minute bei Volllast (grobe Faustregel)
-    lowThreshold = 15.0, -- ab diesem Stand blinkt die Tankanzeige
+    consumption = 4.0,   -- Prozent pro Minute bei Volllast (grobe Faustregel)
+    lowThreshold = 20.0, -- ab diesem Stand blinkt die Tankanzeige
 
     -- Betankung: An diesen Zapfsaeulen-Weltobjekten kann getankt werden
     -- (ox_target). So funktioniert JEDE Tankstelle auf der Map ohne Koordinaten.
