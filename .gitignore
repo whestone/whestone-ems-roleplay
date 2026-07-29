@@ -23,5 +23,7 @@ desktop.ini
 .idea/
 *.swp
 
-# --- NAS-Deployment: lokale Secrets ---
+# --- NAS-Deployment: lokale Secrets (.env + Backups; .env.example bleibt getrackt) ---
 deploy/.env
+deploy/.env.*
+!deploy/.env.example
