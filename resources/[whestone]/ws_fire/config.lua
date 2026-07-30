@@ -38,7 +38,7 @@ WSFire.Firefighting = {
         weapon = 'WEAPON_FIREEXTINGUISHER',
         range = 9.0,    -- Reichweite des Sprühstrahls
         radius = 2.6,   -- Wirkradius am Auftreffpunkt
-        power = 55.0,   -- Loeschkraft pro Sekunde (Brandherd-"Leben" = 100)
+        power = 55.0,   -- Loeschkraft pro Sekunde
     },
     -- Wasserwerfer (im/am Loeschfahrzeug, Taste halten)
     cannon = {
@@ -46,10 +46,14 @@ WSFire.Firefighting = {
         radius = 5.5,
         power = 120.0,  -- deutlich staerker als der Handloescher
     },
-    -- Jeder Brandherd hat 100 "Leben"; Wasser reduziert es bis 0 = geloescht.
+    -- Jeder Brandherd hat 750 "Leben"; Wasser reduziert es bis 0 = geloescht.
     -- Der Feuerwehr-Skill (firefighting) macht das Loeschen schneller.
-    pointHealth = 100.0,
+    -- Richtwerte Loeschdauer je Herd: Loescher ~14 s, Wasserwerfer ~6 s.
+    pointHealth = 750.0,
     skillBonus = 0.20, -- +20% Loeschkraft je Skill-Stufe
+    -- Trefferbreite des Wasserstrahls: nur Herde mit senkrechtem Abstand <= diesem
+    -- Wert (Meter) zur Ziellinie werden getroffen. Kleiner = praeziser (Herd fuer Herd).
+    hitRadius = 1.8,
 }
 
 -- Notruf-Engine (wie beim Rettungsdienst)

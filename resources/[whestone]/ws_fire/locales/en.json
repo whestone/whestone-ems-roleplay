@@ -24,7 +24,7 @@
     "no_offer": "No open call available.",
     "already_assigned": "You are already handling a call.",
     "assigned_msg": "Call accepted: %s. Head to the scene!",
-    "scene_ready": "You're on scene. Put out all fires! (Extinguisher: hold Attack · Water cannon: hold Attack in the truck)",
+    "scene_ready": "You're on scene. Put out all fires! (Extinguisher: hold Right-click/Aim · Water cannon: hold Right-click in the truck)",
     "point_out_more": "Fire spot extinguished - %s remaining.",
     "fire_done": "Call complete: %s. Fire out!",
     "fire_cancelled": "The call was aborted.",

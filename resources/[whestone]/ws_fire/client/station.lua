@@ -65,7 +65,10 @@ end
 local function takeSupply()
     local ped = PlayerPedId()
     if WSFire.Supply.extinguisher then
-        GiveWeaponToPed(ped, joaat('WEAPON_FIREEXTINGUISHER'), 1, false, true)
+        -- Viel Munition + unendliches Magazin, sonst ist der Loescher nach einem
+        -- "Schuss" leer und verschwindet sofort aus der Hand.
+        GiveWeaponToPed(ped, joaat('WEAPON_FIREEXTINGUISHER'), 50000, false, true)
+        SetPedInfiniteAmmoClip(ped, true)
     end
     if WSFire.Supply.heal then SetEntityHealth(ped, GetEntityMaxHealth(ped)) end
     if WSFire.Supply.armour then SetPedArmour(ped, WSFire.Supply.armour) end

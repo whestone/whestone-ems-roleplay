@@ -152,31 +152,46 @@ local function extinguishPoint(p)
     TriggerServerEvent('ws_fire:pointExtinguished', activeScene.uid)
 end
 
--- Wasser entlang der Blickrichtung: alle brennenden Herde im Kegel (oder ganz
--- nah dran) werden geloescht. Grosszuegig, damit Treffer zuverlaessig zaehlen.
+-- Wasser als schmaler Strahl: getroffen wird nur EIN Herd pro Strahl -- der am
+-- besten anvisierte (kleinster senkrechter Abstand zur Ziellinie innerhalb
+-- hitRadius). So loescht man gezielt Herd fuer Herd statt alle auf einmal.
+local HIT_SMOKE = 'exp_grd_grenade_smoke' -- weiss gefaerbter Rauch als Treffer-Feedback
+local lastHitSmoke = 0
+
+local function spawnHitSmoke(x, y, z)
+    local now = GetGameTimer()
+    if now - lastHitSmoke < 130 then return end -- Plume drosseln (Perf)
+    lastHitSmoke = now
+    if not HasNamedPtfxAssetLoaded(FIRE_ASSET) then return end
+    UseParticleFxAsset(FIRE_ASSET)
+    SetParticleFxNonLoopedColour(1.0, 1.0, 1.0) -- weiss faerben (wie Wasserdampf)
+    StartParticleFxNonLoopedAtCoord(HIT_SMOKE, x, y, z + 0.2, 0.0, 0.0, 0.0, 1.3, false, false, false)
+end
+
 function WSFire.spray(origin, dir, range, power)
     if not activeScene then return false end
-    local hit = false
+    local radius = WSFire.Firefighting.hitRadius or 1.8
+    local best, bestPerp
     for _, p in ipairs(activeScene.points) do
         if not p.out then
-            local dx, dy, dz = p.x - origin.x, p.y - origin.y, p.z - origin.z
-            local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
-            if dist <= range then
-                local aligned = dist < 4.5
-                if not aligned and dist > 0.1 then
-                    -- Kosinus zwischen Blickrichtung und Richtung zum Herd
-                    local d = (dx / dist) * dir.x + (dy / dist) * dir.y + (dz / dist) * dir.z
-                    aligned = d > 0.78
-                end
-                if aligned then
-                    hit = true
-                    p.health = p.health - power
-                    if p.health <= 0 then extinguishPoint(p) end
+            local vx, vy, vz = p.x - origin.x, p.y - origin.y, p.z - origin.z
+            -- Projektion auf die (normierte) Blickrichtung = Abstand entlang des Strahls
+            local t = vx * dir.x + vy * dir.y + vz * dir.z
+            if t > 0.0 and t <= range then
+                -- senkrechter Abstand des Herds zum Wasserstrahl; bester = kleinster
+                local cx, cy, cz = origin.x + dir.x * t, origin.y + dir.y * t, origin.z + dir.z * t
+                local perp = math.sqrt((p.x - cx) ^ 2 + (p.y - cy) ^ 2 + (p.z - cz) ^ 2)
+                if perp <= radius and (not bestPerp or perp < bestPerp) then
+                    best, bestPerp = p, perp
                 end
             end
         end
     end
-    return hit
+    if not best then return false end
+    best.health = best.health - power
+    spawnHitSmoke(best.x, best.y, best.z) -- weisser Rauch = du triffst diesen Herd
+    if best.health <= 0 then extinguishPoint(best) end
+    return true
 end
 
 function WSFire.hasActiveFire()

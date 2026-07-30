@@ -24,7 +24,7 @@
     "no_offer": "Kein offener Einsatz vorhanden.",
     "already_assigned": "Du bearbeitest bereits einen Einsatz.",
     "assigned_msg": "Einsatz übernommen: %s. Fahr zum Einsatzort!",
-    "scene_ready": "Du bist am Einsatzort. Lösche alle Brandherde! (Löscher: Angriff halten · Wasserwerfer: im LF Angriff halten)",
+    "scene_ready": "Du bist am Einsatzort. Lösche alle Brandherde! (Löscher ziehen und Rechtsklick/Zielen halten · Wasserwerfer: im LF Rechtsklick halten)",
     "point_out_more": "Brandherd gelöscht – noch %s übrig.",
     "fire_done": "Einsatz abgeschlossen: %s. Feuer aus!",
     "fire_cancelled": "Der Einsatz wurde abgebrochen.",
