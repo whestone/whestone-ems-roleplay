@@ -14,31 +14,44 @@ end
 -- Dienst / Umkleide
 -- ---------------------------------------------------------------------------
 
-local function applyModel(modelName, randomOutfit)
-    local model = joaat(modelName)
+local function applyPed(pedModel, preset)
+    local model = joaat(pedModel)
     lib.requestModel(model, 10000)
     SetPlayerModel(cache.playerId, model)
     SetModelAsNoLongerNeeded(model)
     Wait(150)
 
     local ped = PlayerPedId()
-    if randomOutfit then
-        SetPedRandomComponentVariation(ped, 0)
-    else
-        SetPedDefaultComponentVariation(ped)
+    SetPedDefaultComponentVariation(ped) -- korrektes Standard-Outfit als Basis
+    if preset then
+        for slot, drawable in pairs(preset.components or {}) do
+            SetPedComponentVariation(ped, slot, drawable, 0, 0)
+        end
+        if preset.props then
+            ClearAllPedProps(ped)
+            for slot, drawable in pairs(preset.props) do
+                SetPedPropIndex(ped, slot, drawable, 0, true)
+            end
+        end
     end
     SetEntityHealth(ped, GetEntityMaxHealth(ped))
     return ped
 end
 
-local function startDuty(model)
+local function presetById(id)
+    for _, u in ipairs(WSEms.Uniforms) do
+        if u.id == id then return u end
+    end
+end
+
+local function startDuty(preset)
     if not lib.callback.await('ws_ems:setDuty', false, true) then return end
-    applyModel(model, true)
+    applyPed(preset.ped, preset)
 end
 
 local function endDuty()
     if not lib.callback.await('ws_ems:setDuty', false, false) then return end
-    applyModel(WSEms.CivilianModel, false)
+    applyPed(WSEms.CivilianModel, nil)
 end
 
 local function openCloakroom()
@@ -50,12 +63,13 @@ local function openCloakroom()
         return
     end
 
-    -- Grafische Auswahl (NUI in ws_core): Ped-Bild, Modellcode, Freischaltrang
+    -- Grafische Auswahl (NUI in ws_core): Ped-Bild, Preset-Label, Freischaltrang
     local rank = myRank()
     local skins = {}
     for _, uniform in ipairs(WSEms.Uniforms) do
         skins[#skins + 1] = {
-            model = uniform.model,
+            model = uniform.id,
+            image = uniform.image or uniform.ped,
             label = uniform.label,
             minRank = uniform.minRank or 0,
             locked = rank < (uniform.minRank or 0),
@@ -68,7 +82,10 @@ local function openCloakroom()
         imageBase = 'peds',
         vehicles = skins,
     })
-    if choice then startDuty(choice) end
+    if choice then
+        local preset = presetById(choice)
+        if preset then startDuty(preset) end
+    end
 end
 
 -- ---------------------------------------------------------------------------

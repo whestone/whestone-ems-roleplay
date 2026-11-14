@@ -262,6 +262,7 @@ end)
 -- Fraktion wechseln (respawnt an der neuen Station)
 RegisterCommand('dienst', function()
     if spawning then return end
+    TriggerServerEvent('ws_core:leaveDuty') -- aktuellen Dienst beenden (Off-Duty)
     character = lib.callback.await('ws_core:requestCharacter', false)
     chooseJob(character and character.job)
     spawning = true

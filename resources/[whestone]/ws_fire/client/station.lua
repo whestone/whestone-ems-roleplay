@@ -14,26 +14,43 @@ end
 -- Dienst / Umkleide
 -- ---------------------------------------------------------------------------
 
-local function applyModel(modelName, randomOutfit)
-    local model = joaat(modelName)
+local function applyPed(pedModel, preset)
+    local model = joaat(pedModel)
     lib.requestModel(model, 10000)
     SetPlayerModel(cache.playerId, model)
     SetModelAsNoLongerNeeded(model)
     Wait(150)
     local ped = PlayerPedId()
-    if randomOutfit then SetPedRandomComponentVariation(ped, 0) else SetPedDefaultComponentVariation(ped) end
+    SetPedDefaultComponentVariation(ped) -- korrektes Standard-Outfit als Basis
+    if preset then
+        for slot, drawable in pairs(preset.components or {}) do
+            SetPedComponentVariation(ped, slot, drawable, 0, 0)
+        end
+        if preset.props then
+            ClearAllPedProps(ped)
+            for slot, drawable in pairs(preset.props) do
+                SetPedPropIndex(ped, slot, drawable, 0, true)
+            end
+        end
+    end
     SetEntityHealth(ped, GetEntityMaxHealth(ped))
     return ped
 end
 
-local function startDuty(model)
+local function presetById(id)
+    for _, u in ipairs(WSFire.Uniforms) do
+        if u.id == id then return u end
+    end
+end
+
+local function startDuty(preset)
     if not lib.callback.await('ws_fire:setDuty', false, true) then return end
-    applyModel(model, false)
+    applyPed(preset.ped, preset)
 end
 
 local function endDuty()
     if not lib.callback.await('ws_fire:setDuty', false, false) then return end
-    local ped = applyModel(WSFire.CivilianModel, false)
+    local ped = applyPed(WSFire.CivilianModel, nil)
     RemoveAllPedWeapons(ped, true)
     SetPedArmour(ped, 0)
 end
@@ -49,13 +66,19 @@ local function openCloakroom()
     local rank = myRank()
     local skins = {}
     for _, u in ipairs(WSFire.Uniforms) do
-        skins[#skins + 1] = { model = u.model, label = u.label, minRank = u.minRank or 0, locked = rank < (u.minRank or 0) }
+        skins[#skins + 1] = {
+            model = u.id, image = u.image or u.ped,
+            label = u.label, minRank = u.minRank or 0, locked = rank < (u.minRank or 0),
+        }
     end
     local choice = exports.ws_core:OpenVehicleSelect({
         title = locale('cloakroom_title'), accent = 'fire', fallback = '🧑‍🚒',
         imageBase = 'peds', vehicles = skins,
     })
-    if choice then startDuty(choice) end
+    if choice then
+        local preset = presetById(choice)
+        if preset then startDuty(preset) end
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -94,6 +117,7 @@ local function spawnVehicle(model)
     local tries = 0
     while not NetworkHasControlOfEntity(veh) and tries < 40 do Wait(25) tries = tries + 1 end
 
+    SetVehicleOnGroundProperly(veh) -- sauber auf den Hallenboden setzen (nicht schwebend/im Dach)
     SetVehicleNumberPlateText(veh, ('LSFD%03d'):format(math.random(0, 999)))
     SetVehicleDirtLevel(veh, 0.0)
     SetVehRadioStation(veh, 'OFF')

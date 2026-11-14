@@ -34,10 +34,13 @@ WSEms.Helicopters = {
     { model = 'polmav', label = 'Air Ambulance (Maverick)', livery = 1, minRank = 2 },
 }
 
--- Dienstkleidung (Vanilla-Modelle). EMS hat in Vanilla nur maennliche Peds.
+-- Dienstkleidung (Vanilla-Modelle) als Presets.
+-- id = eindeutiger Rueckgabewert; ped = Modell; image = Vorschaubild (default ped);
+-- components/props optional { [slot] = drawable } (Indizes ggf. im Spiel justieren).
 WSEms.Uniforms = {
-    { label = 'Rettungssanitäter',      model = 's_m_m_paramedic_01', minRank = 0 },
-    { label = 'Notarzt (weißer Kittel)', model = 's_m_m_doctor_01',    minRank = 4 },
+    { id = 'ems_para',    label = 'Rettungssanitäter',       ped = 's_m_m_paramedic_01', minRank = 0 },
+    { id = 'ems_scrubs',  label = 'Sanitäterin (Klinik)',    ped = 's_f_y_scrubs_01',    minRank = 0 },
+    { id = 'ems_doctor',  label = 'Notarzt (weißer Kittel)', ped = 's_m_m_doctor_01',    minRank = 4 },
 }
 
 -- Zivilmodell nach Dienstende

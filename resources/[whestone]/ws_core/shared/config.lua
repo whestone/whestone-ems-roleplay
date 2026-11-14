@@ -46,7 +46,7 @@ WSConfig.Jobs = {
         blipColor = 47, -- orange
         skills = { 'firefighting', 'vehicles', 'stamina' },
         -- Fire Station (Davis) - im Spiel feinjustierbar
-        spawn = vector4(1193.6, -1471.6, 34.9, 240.0),
+        spawn = vector4(1193.5551, -1474.3484, 34.8596, 269.5118),
         ranks = {
             [0] = { name = 'recruit',     label = 'Anwärter',          xp = 0 },
             [1] = { name = 'firefighter', label = 'Feuerwehrmann',     xp = 300 },

@@ -155,22 +155,39 @@ end
 -- Wasser als schmaler Strahl: getroffen wird nur EIN Herd pro Strahl -- der am
 -- besten anvisierte (kleinster senkrechter Abstand zur Ziellinie innerhalb
 -- hitRadius). So loescht man gezielt Herd fuer Herd statt alle auf einmal.
-local HIT_SMOKE = 'exp_grd_grenade_smoke' -- weiss gefaerbter Rauch als Treffer-Feedback
-local lastHitSmoke = 0
+-- Weisser "Dampf" (ent_sht_water, weiss) als Treffer-Feedback -- als LOOPED-Effekt
+-- an EINEM Herd, damit er SOFORT verschwindet, sobald man nicht mehr loescht.
+local steamFx, steamHerd = nil, nil
 
-local function spawnHitSmoke(x, y, z)
-    local now = GetGameTimer()
-    if now - lastHitSmoke < 130 then return end -- Plume drosseln (Perf)
-    lastHitSmoke = now
+local function stopSteam()
+    if steamFx then
+        StopParticleFxLooped(steamFx, false)
+        RemoveParticleFx(steamFx, false)
+        steamFx, steamHerd = nil, nil
+    end
+end
+WSFire.stopSpray = stopSteam -- von firefighting.lua gerufen, wenn nicht mehr geloescht wird
+
+local function steamAt(p)
+    if steamFx and steamHerd == p then return end -- laeuft schon an diesem Herd
+    stopSteam()
     if not HasNamedPtfxAssetLoaded(FIRE_ASSET) then return end
     UseParticleFxAsset(FIRE_ASSET)
-    SetParticleFxNonLoopedColour(1.0, 1.0, 1.0) -- weiss faerben (wie Wasserdampf)
-    StartParticleFxNonLoopedAtCoord(HIT_SMOKE, x, y, z + 0.2, 0.0, 0.0, 0.0, 1.3, false, false, false)
+    -- Ursprung UNTER den Boden -> Dampf steigt aus der Erde auf (kein Sprinkler-Look)
+    steamFx = StartParticleFxLoopedAtCoord('ent_sht_water', p.x, p.y, p.z - 1.5, 0.0, 0.0, 0.0, 9.0, false, false, false, false)
+    if steamFx then SetParticleFxLoopedColour(steamFx, 1.0, 1.0, 1.0, false) end
+    steamHerd = p
 end
 
-function WSFire.spray(origin, dir, range, power)
-    if not activeScene then return false end
-    local radius = WSFire.Firefighting.hitRadius or 1.8
+-- radius = Trefferbreite (senkrechter Abstand zur Ziellinie); area = true trifft
+-- ALLE Herde im Strahl (Wasserwerfer), sonst nur den best anvisierten (Loescher).
+-- radius = Trefferbreite (senkrechter Abstand zur Ziellinie); area = true trifft
+-- ALLE Herde im Strahl (Wasserwerfer), sonst nur den best anvisierten (Loescher).
+-- Der Dampf haengt am best anvisierten Herd und wird sofort gestoppt, sobald
+-- kein Herd mehr getroffen wird.
+function WSFire.spray(origin, dir, range, power, radius, area)
+    if not activeScene then stopSteam() return false end
+    radius = radius or WSFire.Firefighting.hitRadius or 1.8
     local best, bestPerp
     for _, p in ipairs(activeScene.points) do
         if not p.out then
@@ -178,20 +195,25 @@ function WSFire.spray(origin, dir, range, power)
             -- Projektion auf die (normierte) Blickrichtung = Abstand entlang des Strahls
             local t = vx * dir.x + vy * dir.y + vz * dir.z
             if t > 0.0 and t <= range then
-                -- senkrechter Abstand des Herds zum Wasserstrahl; bester = kleinster
+                -- senkrechter Abstand des Herds zum Wasserstrahl
                 local cx, cy, cz = origin.x + dir.x * t, origin.y + dir.y * t, origin.z + dir.z * t
                 local perp = math.sqrt((p.x - cx) ^ 2 + (p.y - cy) ^ 2 + (p.z - cz) ^ 2)
-                if perp <= radius and (not bestPerp or perp < bestPerp) then
-                    best, bestPerp = p, perp
+                if perp <= radius then
+                    if not bestPerp or perp < bestPerp then best, bestPerp = p, perp end
+                    if area then
+                        p.health = p.health - power
+                        if p.health <= 0 then extinguishPoint(p) end
+                    end
                 end
             end
         end
     end
-    if not best then return false end
-    best.health = best.health - power
-    spawnHitSmoke(best.x, best.y, best.z) -- weisser Rauch = du triffst diesen Herd
-    if best.health <= 0 then extinguishPoint(best) end
-    return true
+    if best and not area then
+        best.health = best.health - power
+        if best.health <= 0 then extinguishPoint(best) end
+    end
+    if best then steamAt(best) else stopSteam() end
+    return best ~= nil
 end
 
 function WSFire.hasActiveFire()
@@ -239,6 +261,7 @@ RegisterNetEvent('ws_fire:assigned', function(callout)
 end)
 
 local function cleanupScene(sc)
+    stopSteam()
     if not sc then return end
     for _, p in ipairs(sc.points) do
         for _, h in ipairs(p.fx or {}) do StopParticleFxLooped(h, false) end

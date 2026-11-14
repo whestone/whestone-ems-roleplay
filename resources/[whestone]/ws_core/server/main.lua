@@ -136,6 +136,11 @@ local function setDuty(src, onDuty)
     return true
 end
 
+-- /dienst nimmt den Spieler aus dem aktuellen Dienst (Off-Duty), bevor neu gewaehlt wird
+RegisterNetEvent('ws_core:leaveDuty', function()
+    setDuty(source, false)
+end)
+
 -- Fraktion wechseln (LSPD/EMS). Jede Laufbahn hat eigene Progression
 -- (Rang/XP/Skillpunkte/Skills) - beim Wechsel wird die Arbeitskopie
 -- gesichert und die des neuen Jobs geladen. Beim Wechsel Dienstende.
